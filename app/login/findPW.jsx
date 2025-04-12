@@ -51,7 +51,7 @@ export default function FindPW() {
 
 const styles = StyleSheet.create({
   main: {
-    marginVertical: 60,
+    marginVertical: 70,
     marginHorizontal: 22,
   },
   header: {
@@ -67,6 +67,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 6,
     marginHorizontal: 4,
+    opacity: 0.5,
   },
   headerText: {
     fontFamily: "roboto",
@@ -74,8 +75,9 @@ const styles = StyleSheet.create({
   },
   div: {
     backgroundColor: Colors.subPrimary,
+    opacity: 0.5,
     marginBottom: 18,
-    paddingVertical: 18,
+    paddingVertical: 15,
     paddingHorizontal: 22,
     borderRadius: 100,
     flexDirection: "row",
@@ -84,6 +86,7 @@ const styles = StyleSheet.create({
   },
   personalDiv: {
     backgroundColor: Colors.subPrimary,
+    opacity: 0.5,
     paddingVertical: 18,
     paddingHorizontal: 22,
     borderRadius: 10,

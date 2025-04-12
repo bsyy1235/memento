@@ -77,6 +77,7 @@ const styles = StyleSheet.create({
   },
   div: {
     backgroundColor: Colors.subPrimary,
+    opacity: 0.5,
     marginBottom: 18,
     paddingVertical: 18,
     paddingHorizontal: 22,
