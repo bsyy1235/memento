@@ -9,7 +9,7 @@ import Calendar from './components/Calender';
 export default function App() {
   return (
     <View style={styles.container}>
-        <Calendar />
+        <TOS />
       <StatusBar style="auto" />
     </View>
   );
