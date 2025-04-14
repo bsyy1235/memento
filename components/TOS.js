@@ -58,7 +58,7 @@ export default function TOS() {
                 </View>
             </View>
 
-            {/* 고유식별자 이용약관 */}
+            {/* 고유식별자 이용약관관 */}
             <Text style={styles.linkText}>고유식별자 이용약관</Text>
             <View style={styles.TOScontainer}>
                 <ScrollView style={styles.scrollBox}>
