@@ -4,6 +4,7 @@ import { Colors } from "./../../constants/Colors.ts";
 import { useNavigation } from "@react-navigation/native";
 import { router } from "expo-router";
 
+//expo-router에서는 (tabs) 안의 파일만 탭 시스템에 속해.
 export default function DirectButtons() {
   return (
     <View>
@@ -18,7 +19,7 @@ export default function DirectButtons() {
           </Text>
         </View>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => router.push("/diary/diary")}>
+      <TouchableOpacity onPress={() => router.push("/(tabs)/diary/diary")}>
         <View style={styles.container}>
           <Text
             style={
@@ -49,10 +50,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     flexDirection: "row",
     marginHorizontal: 30,
-    marginVertical: 5,
+    marginVertical: 7,
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 13,
     borderRadius: 10,
     backgroundColor: Colors.subPrimary,
+    opacity: 0.7,
   },
 });

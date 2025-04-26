@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from "react-native";
 import React, { useState } from "react";
-import { Colors } from "./../../constants/Colors.ts";
+import { Colors } from "../../../constants/Colors.ts";
 
 export default function MainDiary() {
   const [showNewDiv, setShowNewDiv] = useState(false);

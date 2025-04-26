@@ -5,7 +5,15 @@ import React from "react";
 export default function Calendar() {
   return (
     <View>
-      <Text>Calendar</Text>
+      <Text
+        style={{
+          fontSize: 26,
+          textAlign: "center",
+          marginVertical: "45%",
+        }}
+      >
+        Calendar
+      </Text>
     </View>
   );
 }

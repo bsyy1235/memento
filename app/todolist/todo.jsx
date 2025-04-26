@@ -13,7 +13,7 @@ import {
 import CheckBox from "expo-checkbox";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // from expo.
-import { Colors } from "./../../constants/Colors";
+import { Colors } from "../../constants/Colors";
 import DraggableFlatList from "react-native-draggable-flatlist";
 
 const STORAGE_KEY = "@toDos";
