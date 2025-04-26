@@ -18,7 +18,7 @@ export default function DirectButtons() {
           </Text>
         </View>
       </TouchableOpacity>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => router.push("/diary/diary")}>
         <View style={styles.container}>
           <Text
             style={

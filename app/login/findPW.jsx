@@ -15,7 +15,11 @@ export default function FindPW() {
           <Text>이메일 찾기</Text>
         </View>
         <View style={styles.div}>
-          <Text style={styles.divText}>가입 이메일 *</Text>
+          <TextInput
+            placeholder="가입 이메일 *"
+            keyboardType="email-address"
+            style={styles.divText}
+          />
         </View>
       </View>
       <View>
@@ -24,7 +28,11 @@ export default function FindPW() {
           <Text>인증번호 발송</Text>
         </View>
         <View style={styles.div}>
-          <Text style={styles.divText}>인증번호 *</Text>
+          <TextInput
+            style={styles.divText}
+            placeholder="인증번호 *"
+            keyboardType="number-pad"
+          />
         </View>
       </View>
       <View>
@@ -32,7 +40,11 @@ export default function FindPW() {
           <Text>비밀번호 확인</Text>
         </View>
         <View style={styles.div}>
-          <Text style={styles.divText}>비밀번호 재설정 *</Text>
+          <TextInput
+            style={styles.divText}
+            placeholder="비밀번호 재설정 *"
+            secureTextEntry={true}
+          />
         </View>
       </View>
       <View>
@@ -51,7 +63,7 @@ export default function FindPW() {
 
 const styles = StyleSheet.create({
   main: {
-    marginVertical: 70,
+    marginVertical: 50,
     marginHorizontal: 22,
   },
   header: {
@@ -76,8 +88,8 @@ const styles = StyleSheet.create({
   div: {
     backgroundColor: Colors.subPrimary,
     opacity: 0.5,
-    marginBottom: 18,
-    paddingVertical: 15,
+    marginBottom: 13,
+    paddingVertical: 5,
     paddingHorizontal: 22,
     borderRadius: 100,
     flexDirection: "row",
@@ -87,7 +99,7 @@ const styles = StyleSheet.create({
   personalDiv: {
     backgroundColor: Colors.subPrimary,
     opacity: 0.5,
-    paddingVertical: 18,
+    paddingVertical: 22,
     paddingHorizontal: 22,
     borderRadius: 10,
     flexDirection: "row",
@@ -96,7 +108,7 @@ const styles = StyleSheet.create({
   },
   divText: {
     color: "grey",
-    fontSize: 17,
+    fontSize: 15,
     fontFamily: "roboto",
     fontWeight: "400",
   },

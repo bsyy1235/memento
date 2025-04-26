@@ -77,9 +77,9 @@ const styles = StyleSheet.create({
   },
   div: {
     backgroundColor: Colors.subPrimary,
-    opacity: 0.5,
+    opacity: 0.6,
     marginBottom: 18,
-    paddingVertical: 18,
+    paddingVertical: 16,
     paddingHorizontal: 22,
     borderRadius: 100,
     flexDirection: "row",
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   },
   divText: {
     color: "grey",
-    fontSize: 17,
+    fontSize: 15,
     fontFamily: "roboto",
     fontWeight: "400",
   },

@@ -8,7 +8,9 @@ import {
   TextInput,
   ScrollView,
   Alert,
+  Image,
 } from "react-native";
+import CheckBox from "expo-checkbox";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // from expo.
 import { Colors } from "./../../constants/Colors";
@@ -45,10 +47,10 @@ export default function todo() {
     setText("");
   };
   const deleteTodo = (id) => {
-    Alert.alert("Delete To Do", "Are you sure?", [
-      { text: "Cancel" },
+    Alert.alert("할 일 삭제", "삭제하시겠습니까?", [
+      { text: "아니오" },
       {
-        text: "I'm Sure",
+        text: "네",
         onPress: async () => {
           const newTodos = { ...todos };
           delete newTodos[id];
@@ -76,6 +78,13 @@ export default function todo() {
     if (total === 0) return 0;
     const done = Object.values(todos).filter((todo) => todo.done).length;
     return Math.round((done / total) * 100);
+  };
+  const toggleCheck = (key) => {
+    const updatedTodos = {
+      ...todos,
+      [key]: { ...todos[key], completed: !todos[key].completed },
+    };
+    setTodos(updatedTodos);
   };
 
   // const renderItem = ({ item, drag, isActive }) => (
@@ -141,13 +150,33 @@ export default function todo() {
       <ScrollView style={{ flex: 1 }}>
         {Object.keys(todos).map((key) => (
           <View style={styles.toDo} key={key}>
-            <Text style={styles.toDoText}>{todos[key].text}</Text>
+            <View style={styles.row}>
+              <CheckBox
+                tintColor={Colors.subPrimary} // 체크되지 않은 상태의 테두리 색상
+                onCheckColor={Colors.subPrimary} // 체크 표시 색상
+                onTintColor={Colors.subPrimary} // 체크된 색상
+                style={styles.checkbox}
+                value={todos[key].completed || false}
+                onValueChange={() => toggleCheck(key)}
+              />
+              <Text
+                style={[
+                  styles.toDoText,
+                  todos[key].completed && {
+                    textDecorationLine: "line-through",
+                    color: "gray",
+                  },
+                ]}
+              >
+                {todos[key].text}
+              </Text>
+            </View>
             <View style={styles.buttons}>
               <TouchableOpacity>
                 <Text style={styles.Xbutton}>V</Text>
               </TouchableOpacity>
               <TouchableOpacity>
-                <Text style={styles.Xbutton}>ㅁ</Text>
+                <Text style={styles.Xbutton}>O</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => deleteTodo(key)}>
                 <Text style={styles.Xbutton}>X</Text>
@@ -204,7 +233,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     borderRadius: 100,
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
   },
   toDoText: {
@@ -214,7 +242,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   Xbutton: {
-    color: "red",
+    color: "pink",
     fontSize: 14,
     fontWeight: "600",
     marginLeft: 5,
@@ -222,5 +250,13 @@ const styles = StyleSheet.create({
   buttons: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  checkbox: {
+    transform: [{ scale: 0.7 }], // 체크박스 크기 줄이기
+    marginRight: 8,
   },
 });
