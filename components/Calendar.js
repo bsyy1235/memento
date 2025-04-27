@@ -331,8 +331,6 @@ const styles = StyleSheet.create({
   },
   navButton: {
     backgroundColor: '#fff8f3',
-    borderColor: '#d9d9d9',
-    borderWidth: 1,
     borderRadius: 10,
     padding: 15,
     marginHorizontal: 5,

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 
-export default function Collect() {
+export default function Collect({onChangeScreen}) {
   // 가상의 다이어리 데이터
   const diaries = [
     {
@@ -25,9 +25,11 @@ export default function Collect() {
     },
   ];
 
+  const Back=() => {onChangeScreen('Calendar');};  
+
   // 다이어리 상세 보기 함수
   const handleViewMore = (id) => {
-    alert(`다이어리 ID ${id} 상세보기로 이동합니다.`);
+    onChangeScreen('DiaryScreen');
   };
 
   // 음성 재생 함수
@@ -37,6 +39,13 @@ export default function Collect() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <TouchableOpacity onPress={Back}>
+          <Ionicons
+            name="chevron-back-outline" 
+            size={30} 
+            color={'#888888'}
+          />
+      </TouchableOpacity>
       <Text style={styles.header}>다이어리 모아보기</Text>
       
       <ScrollView style={styles.scrollContainer}>
@@ -89,16 +98,20 @@ const styles = StyleSheet.create({
         width: '100%',
         padding: 20,
       },
+
   header: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 25,
+    marginBottom: 10,
     alignSelf: 'flex-start',
   },
   scrollContainer: {
     paddingLeft: 15,
     paddingRight: 15,
     width: '100%',
+    marginBottom: 15,
   },
   diaryItem: {
     marginBottom: 20,

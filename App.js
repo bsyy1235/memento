@@ -8,6 +8,7 @@ import Calendar from './components/Calendar';
 import Collect from './components/Collect';
 import Stat from './components/Stat';
 import NavigationBar from './components/NavigationBar';
+import DiaryScreen from './components/DiaryScreen';
 
 export default function App() {
   const [activeScreen, setActiveScreen] = useState('Calendar');
@@ -21,7 +22,9 @@ export default function App() {
   const renderScreen = () => {
     switch (activeScreen) {
       case 'Stat':
-        return <Stat />;
+        return <Stat onChangeScreen={setActiveScreen}/>;
+      case 'DiaryScreen':
+        return <DiaryScreen onChangeScreen={setActiveScreen}/>;
       case 'Calendar':
         return <Calendar onChangeScreen={setActiveScreen} />;
       case 'Collect':
@@ -35,7 +38,7 @@ export default function App() {
       case 'TOS':
         return <TOS onChangeScreen={setActiveScreen}/>;
       default:
-        return <Calender />;
+        return <Calendar />;
     }
   };
 
