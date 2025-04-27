@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 
-export default function Calendar() {
+export default function Calendar({onChangeScreen}) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   
@@ -122,7 +122,13 @@ export default function Calendar() {
   
   //버튼 클릭
   const navigateToScreen = (screenName) => {
-    alert(`${screenName} 화면으로 이동합니다.`);
+    if (screenName === '다이어리 모아보기') {
+      // props로 전달받은 navigation 함수 사용
+      onChangeScreen('Collect');
+    } else {
+      // 다른 버튼들은 기존과 같이 alert 표시
+      alert(`${screenName} 화면으로 이동합니다.`);
+    }
   };
   
   // 날짜 상태에 따른 상태 표시기 렌더링
@@ -250,11 +256,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    width: '90%',
+    width: '100%',
   },
   calendarContainer: {
-    padding: 10,
-    marginTop: 20,
+    padding: '10%',
+    marginTop: '15%',
   },
   header: {
     flexDirection: 'row',
@@ -320,8 +326,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   buttonsContainer: {
-    marginBottom: 20,
-    marginHorizontal: 5,
+    marginBottom: '10%',
+    marginHorizontal: 30,
   },
   navButton: {
     backgroundColor: '#fff8f3',
