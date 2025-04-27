@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-
+import { Ionicons} from '@expo/vector-icons';
 
 const CustomCheckbox = ({ checked, onToggle }) => (
   <TouchableOpacity
@@ -23,14 +23,15 @@ const CustomCheckbox = ({ checked, onToggle }) => (
   </TouchableOpacity>
 );
 
-export default function TOS() {
+export default function TOS({onChangeScreen}) {
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeIdentifier, setAgreeIdentifier] = useState(false);
 
-  const Back=() => {alert('뒤로가기');};  
+  const Back=() => {onChangeScreen('SignUp');};  
   const Agree = () => {
     if (agreePrivacy && agreeIdentifier) {
-      alert('약관 동의 완료!');
+      alert('회원가입 완료!');
+      onChangeScreen('Calendar');
     } else {
       alert('모든 약관에 동의해주세요.');
     }
@@ -38,7 +39,11 @@ export default function TOS() {
   return (
     <View style={styles.container}>
         <TouchableOpacity onPress={Back}>
-            <Text>Back</Text>
+            <Ionicons
+                name="chevron-back-outline" 
+                size={30} 
+                color={'#888888'}
+            />
         </TouchableOpacity>
 
         <View style={styles.inputContainer}>
@@ -48,8 +53,18 @@ export default function TOS() {
             <Text style={styles.linkText}>개인정보활용 방침</Text>
             <View style={styles.TOScontainer}>
                 <ScrollView style={styles.scrollBox}>
-                  <Text>
+                  <Text style={{ padding: 5}}>
                     개인정보 활용 방침
+                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
                   </Text>
                 </ScrollView>
                 <View style={styles.checkBoxContainer}>
@@ -58,11 +73,11 @@ export default function TOS() {
                 </View>
             </View>
 
-            {/* 고유식별자 이용약관관 */}
+            {/* 고유식별자 이용약관 */}
             <Text style={styles.linkText}>고유식별자 이용약관</Text>
             <View style={styles.TOScontainer}>
                 <ScrollView style={styles.scrollBox}>
-                  <Text>
+                  <Text style={{ padding: 5}}>
                     고유식별자 이용약관
                   </Text>
                 </ScrollView>
@@ -95,7 +110,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff8f3',
     marginBottom: 15,
     borderRadius: 10,
-    height: 250,
+    height: 230,
     position: 'relative',
     padding: 10,
   },
@@ -124,7 +139,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     alignItems: 'center',
     paddingVertical: 13,
-    marginTop: 20,
+    marginTop: 10,
   },
   buttontext: {
     color: '#ffffff',

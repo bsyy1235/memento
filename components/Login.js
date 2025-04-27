@@ -1,25 +1,27 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 
-export default function Login() {
-  const Login=() => {alert('로그인');};
-  const SignUp=() => {alert('회원가입');};
+export default function Login({onChangeScreen}) {
+  const Login=() => {onChangeScreen('Calendar');};
+  const SignUp=() => { onChangeScreen('SignUp'); };
   const Passwd=() => {alert('비밀번호찾기');};
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>로그인</Text>
-      <TextInput style={styles.input} placeholder="이메일" />
-      <TextInput style={styles.input} placeholder="비밀번호" secureTextEntry />
-      <TouchableOpacity style={styles.button} onPress={Login}>
-        <Text style={styles.buttontext}>로그인</Text>
-      </TouchableOpacity>
-      <View style={styles.buttonView}>
-        <TouchableOpacity onPress={Passwd}>
-          <Text style={styles.buttontext}>비밀번호찾기 &gt;</Text>
+      <Text style={styles.header}>로그인</Text>
+      <View style={styles.inputContainer}>
+        <TextInput style={styles.input} placeholder="이메일" />
+        <TextInput style={styles.input} placeholder="비밀번호" secureTextEntry />
+        <TouchableOpacity style={styles.button} onPress={Login}>
+          <Text style={styles.buttontext}>로그인</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={SignUp}>
-          <Text style={styles.buttontext}>회원가입 &gt;</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonView}>
+          <TouchableOpacity onPress={Passwd}>
+            <Text style={styles.buttontext}>비밀번호찾기 &gt;</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={SignUp}>
+            <Text style={styles.buttontext}>회원가입 &gt;</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <Text style={styles.logo}>(c) Memento</Text>
     </View>
@@ -28,20 +30,27 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 40,
     justifyContent: 'center',
-    width: '80%',
+    width: '100%',
     padding: 20,
   },
-  title: {
+  header: {
+    marginTop: '40%',
     fontSize: 24,
     marginBottom: 35,
     textAlign: 'center',
+  },
+  inputContainer:{
+    justifyContent: 'center',
+    width: '100%',
+    padding: 20,
   },
   input: {
     borderWidth: 1,
     borderColor: '#fff8f3',
     marginBottom: 15,
-    padding: 10,
+    padding: 15,
     borderRadius: 100,
     backgroundColor: '#fff8f3',
   },
@@ -53,8 +62,8 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   buttontext: {
-    color: '#ffffff',
-    fontSize: 15,
+    color: '#4d4d4d',
+    fontSize: 13,
     fontWeight: 'bold',
   },
   buttonView: {
@@ -69,6 +78,6 @@ const styles = StyleSheet.create({
   logo: {
     color: '#4d4d4d',
     textAlign: 'center',
-    marginTop: 50,
+    marginTop: 40,
   },
 });
