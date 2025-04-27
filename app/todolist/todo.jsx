@@ -170,6 +170,7 @@ export default function todo() {
                       style={[
                         styles.toDoText,
                         // { borderBottomWidth: 1, borderColor: "gray" },
+                        { paddingVertical: 0 },
                       ]}
                       value={editingText}
                       onChangeText={setEditingText}
@@ -205,16 +206,12 @@ export default function todo() {
                   )}
                 </View>
                 <View style={styles.buttons}>
-                  {/* <TouchableOpacity>
-                <Text style={styles.Xbutton}>V</Text>
-              </TouchableOpacity> */}
                   <TouchableOpacity
                     onPress={() => {
                       setEditingKey(item.id); // 어떤 todo를 수정할지 기억
                       setEditingText(item.text); // 기존 텍스트를 편집할 수 있게
                     }}
                   >
-                    {/* <Text style={styles.Xbutton}>O</Text> */}
                     <Image
                       source={require("../../assets/images/icon-pencil.png")}
                       style={{
@@ -227,7 +224,6 @@ export default function todo() {
                     onPress={() => deleteTodo(item.id)}
                     style={styles.button}
                   >
-                    {/* <Text style={styles.Xbutton}>X</Text> */}
                     <Image
                       source={require("../../assets/images/icon-recycle-bin.png")}
                       style={{
@@ -297,7 +293,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "roboto",
     fontWeight: "500",
-    maxWidth: "75%",
+    maxWidth: "90%",
   },
   Xbutton: {
     color: "pink",
