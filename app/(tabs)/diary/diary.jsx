@@ -7,13 +7,39 @@ import {
   Alert,
   TouchableOpacity,
   ScrollView,
+  Image,
+  PixelRatio,
+  Keyboard,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Colors } from "../../../constants/Colors.ts";
 
 export default function MainDiary() {
   const [showNewDiv, setShowNewDiv] = useState(false);
   const [showFinalPage, setShowFinalPage] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false); // 키보드 표시 여부 상태 추가
+
+  // 키보드 이벤트 리스너 추가
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      () => {
+        setKeyboardVisible(true); // 키보드가 나타나면 상태 변경
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setKeyboardVisible(false); // 키보드가 사라지면 상태 변경
+      }
+    );
+
+    // 컴포넌트가 언마운트될 때 이벤트 리스너 제거
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   const openDiv = () => {
     setShowNewDiv(true);
@@ -50,6 +76,10 @@ export default function MainDiary() {
     );
   };
 
+  const size = 9;
+  const size2 = 11;
+  const size_mic = 35;
+
   return (
     <View style={styles.main}>
       <StatusBar style="auto" />
@@ -67,38 +97,93 @@ export default function MainDiary() {
               />
             </View>
           </ScrollView>
-          {!showNewDiv ? (
-            <View>
-              <View style={styles.buttons}>
-                <TouchableOpacity onPress={() => openDiv()}>
-                  <Text style={styles.micButton}>M</Text>
-                </TouchableOpacity>
-                <TouchableOpacity>
-                  <View style={[styles.container, styles.container_1]}>
-                    <Text>임시저장</Text>
+          {/* 키보드가 보이지 않을 때만 하단 버튼들 표시 */}
+          {!keyboardVisible && (
+            <>
+              {!showNewDiv ? (
+                <View>
+                  <View style={styles.buttons}>
+                    <TouchableOpacity onPress={() => openDiv()}>
+                      <Image
+                        source={require("../../../assets/images/microphone.png")}
+                        style={{
+                          width: PixelRatio.getPixelSizeForLayoutSize(size),
+                          height: PixelRatio.getPixelSizeForLayoutSize(size),
+                        }}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity>
+                      <View style={[styles.container, styles.container_1]}>
+                        <Text>임시저장</Text>
+                      </View>
+                    </TouchableOpacity>
                   </View>
-                </TouchableOpacity>
-              </View>
-              <TouchableOpacity onPress={openDiv}>
-                <View style={styles.container}>
-                  <Text>코멘트 요청하기 {">"}</Text>
+                  <TouchableOpacity onPress={openDiv}>
+                    <View style={styles.container}>
+                      <Text>코멘트 요청하기 {">"}</Text>
+                    </View>
+                  </TouchableOpacity>
                 </View>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.newDiv}>
-              <View style={styles.buttons}>
-                <TouchableOpacity>
-                  <Text style={styles.micButton}>{">"}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity>
-                  <Text style={styles.micButton}>||</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => openAlert()}>
-                  <Text style={styles.micButton}>ㅁ</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+              ) : (
+                <View style={styles.newDiv}>
+                  <View>
+                    <Image
+                      source={require("../../../assets/images/icon_voice_mine.png")}
+                      style={[
+                        {
+                          width: PixelRatio.getPixelSizeForLayoutSize(size_mic),
+                          height:
+                            PixelRatio.getPixelSizeForLayoutSize(size_mic),
+                        },
+                        styles.voice,
+                      ]}
+                    />
+                  </View>
+                  <View style={{ marginTop: 3, marginBottom: 5 }}>
+                    <Text>00:00:00</Text>
+                  </View>
+                  <View style={styles.buttons}>
+                    <TouchableOpacity>
+                      <Image
+                        source={require("../../../assets/images/icons-play-50.png")}
+                        style={[
+                          {
+                            width: PixelRatio.getPixelSizeForLayoutSize(size2),
+                            height: PixelRatio.getPixelSizeForLayoutSize(size2),
+                          },
+                          styles.voice,
+                        ]}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity>
+                      <Image
+                        source={require("../../../assets/images/icons-pause-50.png")}
+                        style={[
+                          {
+                            width: PixelRatio.getPixelSizeForLayoutSize(size2),
+                            height: PixelRatio.getPixelSizeForLayoutSize(size2),
+                          },
+                          styles.voice,
+                          styles.iconMarginHorizontal,
+                        ]}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => openAlert()}>
+                      <Image
+                        source={require("../../../assets/images/icons-stop-50.png")}
+                        style={[
+                          {
+                            width: PixelRatio.getPixelSizeForLayoutSize(size2),
+                            height: PixelRatio.getPixelSizeForLayoutSize(size2),
+                          },
+                          styles.voice,
+                        ]}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </>
           )}
         </>
       ) : (
@@ -177,17 +262,6 @@ const styles = StyleSheet.create({
     flex: 1, // 부모 ScrollView의 공간을 모두 차지하도록 flex: 1 추가
     padding: 10,
   },
-  personalDiv: {
-    backgroundColor: Colors.subPrimary,
-    opacity: 0.5,
-    paddingVertical: 22,
-    paddingHorizontal: 22,
-    borderRadius: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
   // divText 수정
   divText: {
     color: "grey",
@@ -209,16 +283,14 @@ const styles = StyleSheet.create({
   container_1: {
     marginVertical: 15,
   },
+  voice: {
+    alignItems: "center",
+    marginVertical: 12,
+  },
   buttons: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  micButton: {
-    color: "black",
-    fontSize: 14,
-    fontWeight: "600",
-    marginLeft: 5,
   },
   newDiv: {
     marginTop: 15,
@@ -257,5 +329,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
     padding: 15,
     borderRadius: 10,
+  },
+  iconMarginHorizontal: {
+    marginHorizontal: 100,
   },
 });

@@ -6,54 +6,68 @@ import {
   View,
   TouchableOpacity,
   TextInput,
-  ScrollView,
   Alert,
   Image,
+  PixelRatio,
 } from "react-native";
 import CheckBox from "expo-checkbox";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // from expo.
 import { Colors } from "../../constants/Colors";
 import DraggableFlatList from "react-native-draggable-flatlist";
+import { GestureHandlerRootView } from "react-native-gesture-handler"; // ScrollView를 포함함.
 
 const STORAGE_KEY = "@toDos";
 
 export default function todo() {
   const [text, setText] = useState("");
-  const [todos, setTodos] = useState({});
+  const [todos, setTodos] = useState([]);
+  const [editingKey, setEditingKey] = useState(null); // 어떤 todo를 수정중인지
+  const [editingText, setEditingText] = useState(""); // 수정 중인 텍스트
+
   const onChangeText = (payload) => setText(payload); // save
   const saveTodos = async (toSave) => {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   };
   const loadToDos = async () => {
     const s = await AsyncStorage.getItem(STORAGE_KEY); // String
-    if (s !== null) setTodos(JSON.parse(s)); // string -> javascript Object
+    const parsed = JSON.parse(s);
+    setTodos(Array.isArray(parsed) ? parsed : []);
     // "Save & Load" done.
   };
+
   useEffect(() => {
     loadToDos();
   }, []);
+
   const addTodo = async () => {
     if (text === "") {
       return;
     }
     // save to-do
-    const newTodos = {
-      ...todos,
-      [Date.now()]: { text },
+    const newTodo = {
+      id: Date.now().toString(),
+      text,
+      completed: false,
+      // ...todos,
+      // [Date.now()]: { text },
     };
+
+    const newTodos = [...todos, newTodo];
     setTodos(newTodos);
     await saveTodos(newTodos);
     setText("");
   };
+
   const deleteTodo = (id) => {
     Alert.alert("할 일 삭제", "삭제하시겠습니까?", [
       { text: "아니오" },
       {
         text: "네",
         onPress: async () => {
-          const newTodos = { ...todos };
-          delete newTodos[id];
+          // const newTodos = { ...todos };
+          const newTodos = todos.filter((todo) => todo.id !== id);
+          // delete newTodos[id];
           setTodos(newTodos);
           await saveTodos(newTodos);
         },
@@ -62,50 +76,29 @@ export default function todo() {
   };
 
   const markDone = async (id) => {
-    const updated = {
-      ...todos,
-      [id]: {
-        ...todos[id],
-        done: !todos[id].done,
-      },
-    };
+    const updated = todos.map((todo) =>
+      todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    );
     setTodos(updated);
     await saveTodos(updated);
   };
 
   const getCompletionRate = () => {
-    const total = Object.keys(todos).length;
+    const total = todos.length;
     if (total === 0) return 0;
-    const done = Object.values(todos).filter((todo) => todo.done).length;
+    const done = todos.filter((todo) => todo.completed).length;
     return Math.round((done / total) * 100);
   };
-  const toggleCheck = (key) => {
-    const updatedTodos = {
-      ...todos,
-      [key]: { ...todos[key], completed: !todos[key].completed },
-    };
+
+  const toggleCheck = (id) => {
+    const updatedTodos = todos.map((todo) =>
+      todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    );
     setTodos(updatedTodos);
+    saveTodos(updatedTodos); // 저장 함수 추가
   };
 
-  // const renderItem = ({ item, drag, isActive }) => (
-  //   <TouchableOpacity
-  //     style={[styles.toDo, { backgroundColor: isActive ? "#f0f0f0" : "white" }]}
-  //     onLongPress={drag}
-  //   >
-  //     <Text style={styles.toDoText}>{item.text}</Text>
-  //     <View style={styles.buttons}>
-  //       <TouchableOpacity>
-  //         <Text style={styles.Xbutton}>V</Text>
-  //       </TouchableOpacity>
-  //       <TouchableOpacity>
-  //         <Text style={styles.Xbutton}>ㅁ</Text>
-  //       </TouchableOpacity>
-  //       <TouchableOpacity onPress={() => deleteTodo(item.id)}>
-  //         <Text style={styles.Xbutton}>X</Text>
-  //       </TouchableOpacity>
-  //     </View>
-  //   </TouchableOpacity>
-  // );
+  const size = 7;
 
   return (
     <View style={styles.container}>
@@ -147,44 +140,108 @@ export default function todo() {
         style={{ flex: 1 }}
       /> */}
 
-      <ScrollView style={{ flex: 1 }}>
-        {Object.keys(todos).map((key) => (
-          <View style={styles.toDo} key={key}>
-            <View style={styles.row}>
-              <CheckBox
-                tintColor={Colors.subPrimary} // 체크되지 않은 상태의 테두리 색상
-                onCheckColor={Colors.subPrimary} // 체크 표시 색상
-                onTintColor={Colors.subPrimary} // 체크된 색상
-                style={styles.checkbox}
-                value={todos[key].completed || false}
-                onValueChange={() => toggleCheck(key)}
-              />
-              <Text
-                style={[
-                  styles.toDoText,
-                  todos[key].completed && {
-                    textDecorationLine: "line-through",
-                    color: "gray",
-                  },
-                ]}
-              >
-                {todos[key].text}
-              </Text>
-            </View>
-            <View style={styles.buttons}>
-              <TouchableOpacity>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <DraggableFlatList
+          data={todos}
+          keyExtractor={(item) => item.id}
+          onDragEnd={async ({ data }) => {
+            setTodos(data);
+            await saveTodos(data); // 드래그 후 순서 저장 추가
+          }}
+          renderItem={({ item, drag, isActive }) => (
+            <TouchableOpacity
+              onLongPress={drag} // 길게 누르면 드래그 시작
+              disabled={isActive} // 드래그 중에는 비활성화
+            >
+              <View style={styles.toDo} key={item.id}>
+                <View style={[styles.row]}>
+                  <CheckBox
+                    tintColor={Colors.subPrimary} // 체크되지 않은 상태의 테두리 색상
+                    onCheckColor={Colors.subPrimary} // 체크 표시 색상
+                    onTintColor={Colors.subPrimary} // 체크된 색상
+                    style={styles.checkbox}
+                    value={item.completed || false}
+                    onValueChange={() => markDone(item.id)}
+                    //toggleCheck
+                  />
+
+                  {editingKey === item.id ? (
+                    <TextInput
+                      style={[
+                        styles.toDoText,
+                        // { borderBottomWidth: 1, borderColor: "gray" },
+                      ]}
+                      value={editingText}
+                      onChangeText={setEditingText}
+                      onSubmitEditing={async () => {
+                        const updatedTodos = todos.map((t) =>
+                          t.id === item.id
+                            ? {
+                                ...t,
+                                text: editingText,
+                              }
+                            : t
+                        );
+                        setTodos(updatedTodos);
+                        await saveTodos(updatedTodos);
+                        setEditingKey(null); // 수정모드 종료
+                        setEditingText("");
+                      }}
+                      returnKeyType="done"
+                      autoFocus
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.toDoText,
+                        item.completed && {
+                          textDecorationLine: "line-through",
+                          color: "grey",
+                        },
+                      ]}
+                    >
+                      {item.text}
+                    </Text>
+                  )}
+                </View>
+                <View style={styles.buttons}>
+                  {/* <TouchableOpacity>
                 <Text style={styles.Xbutton}>V</Text>
-              </TouchableOpacity>
-              <TouchableOpacity>
-                <Text style={styles.Xbutton}>O</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => deleteTodo(key)}>
-                <Text style={styles.Xbutton}>X</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
+              </TouchableOpacity> */}
+                  <TouchableOpacity
+                    onPress={() => {
+                      setEditingKey(item.id); // 어떤 todo를 수정할지 기억
+                      setEditingText(item.text); // 기존 텍스트를 편집할 수 있게
+                    }}
+                  >
+                    {/* <Text style={styles.Xbutton}>O</Text> */}
+                    <Image
+                      source={require("../../assets/images/icon-pencil.png")}
+                      style={{
+                        width: PixelRatio.getPixelSizeForLayoutSize(size),
+                        height: PixelRatio.getPixelSizeForLayoutSize(size),
+                      }}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => deleteTodo(item.id)}
+                    style={styles.button}
+                  >
+                    {/* <Text style={styles.Xbutton}>X</Text> */}
+                    <Image
+                      source={require("../../assets/images/icon-recycle-bin.png")}
+                      style={{
+                        width: PixelRatio.getPixelSizeForLayoutSize(size),
+                        height: PixelRatio.getPixelSizeForLayoutSize(size),
+                      }}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      </GestureHandlerRootView>
 
       <View>
         <TextInput
@@ -240,6 +297,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "roboto",
     fontWeight: "500",
+    maxWidth: "75%",
   },
   Xbutton: {
     color: "pink",
@@ -250,6 +308,10 @@ const styles = StyleSheet.create({
   buttons: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  button: {
+    marginLeft: 7,
   },
   row: {
     flexDirection: "row",
