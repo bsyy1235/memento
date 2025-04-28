@@ -1,8 +1,41 @@
-import { View, Text, TextInput, StyleSheet, StatusBar } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  StatusBar,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import React from "react";
 import { Colors } from "./../../constants/Colors.ts";
+import { useDarkMode } from "../DarkModeContext";
 
 export default function FindPW() {
+  const { isDarkMode } = useDarkMode();
+
+  const findEmail = () => {
+    Alert.alert("이메일 찾기", "이메일 찾기를 진행하시겠습니까?", [
+      {
+        text: "네",
+      },
+      {
+        text: "아니오",
+      },
+    ]);
+  };
+
+  const sendMessage = () => {
+    Alert.alert("인증번호", "인증번호를 요청하시겠습니까까?", [
+      {
+        text: "네",
+      },
+      {
+        text: "아니오",
+      },
+    ]);
+  };
+
   return (
     <View style={styles.main}>
       <StatusBar style="auto" />
@@ -12,9 +45,16 @@ export default function FindPW() {
       <View>
         <View style={styles.subheader}>
           <Text>이메일</Text>
-          <Text>이메일 찾기</Text>
+          <TouchableOpacity onPress={() => findEmail()}>
+            <Text>이메일 찾기</Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.div}>
+        <View
+          style={[
+            styles.div,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
+        >
           <TextInput
             placeholder="가입 이메일 *"
             keyboardType="email-address"
@@ -25,9 +65,16 @@ export default function FindPW() {
       <View>
         <View style={styles.subheader}>
           <Text>인증번호</Text>
-          <Text>인증번호 발송</Text>
+          <TouchableOpacity onPress={() => sendMessage()}>
+            <Text>인증번호 발송</Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.div}>
+        <View
+          style={[
+            styles.div,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
+        >
           <TextInput
             style={styles.divText}
             placeholder="인증번호 *"
@@ -39,7 +86,12 @@ export default function FindPW() {
         <View style={styles.subheader}>
           <Text>비밀번호 확인</Text>
         </View>
-        <View style={styles.div}>
+        <View
+          style={[
+            styles.div,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
+        >
           <TextInput
             style={styles.divText}
             placeholder="비밀번호 재설정 *"
@@ -51,7 +103,12 @@ export default function FindPW() {
         <View style={styles.subheader}>
           <Text>개인정보 처리 방침</Text>
         </View>
-        <View style={styles.personalDiv}>
+        <View
+          style={[
+            styles.personalDiv,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
+        >
           <TextInput multiple style={styles.divText}>
             ...
           </TextInput>
@@ -86,7 +143,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
   },
   div: {
-    backgroundColor: Colors.subPrimary,
+    // backgroundColor: Colors.subPrimary,
     opacity: 0.5,
     marginBottom: 13,
     paddingVertical: 5,
@@ -97,7 +154,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   personalDiv: {
-    backgroundColor: Colors.subPrimary,
+    // backgroundColor: Colors.subPrimary,
     opacity: 0.5,
     paddingVertical: 22,
     paddingHorizontal: 22,

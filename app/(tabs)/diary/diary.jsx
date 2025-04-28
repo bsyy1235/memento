@@ -13,11 +13,14 @@ import {
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { Colors } from "../../../constants/Colors.ts";
+import { useDarkMode } from "../../DarkModeContext";
 
 export default function MainDiary() {
   const [showNewDiv, setShowNewDiv] = useState(false);
   const [showFinalPage, setShowFinalPage] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false); // 키보드 표시 여부 상태 추가
+
+  const { isDarkMode } = useDarkMode();
 
   // 키보드 이벤트 리스너 추가
   useEffect(() => {
@@ -87,9 +90,28 @@ export default function MainDiary() {
         <>
           <View style={styles.header}>
             <Text style={styles.headerText}>0월 00일 다이어리</Text>
+            {showNewDiv ? (
+              <TouchableOpacity onPress={() => setShowNewDiv(false)}>
+                <Image
+                  source={require("../../../assets/images/icons-left-arrow.png")}
+                  style={[
+                    {
+                      width: PixelRatio.getPixelSizeForLayoutSize(size2),
+                      height: PixelRatio.getPixelSizeForLayoutSize(size2),
+                    },
+                    styles.voice,
+                  ]}
+                />
+              </TouchableOpacity>
+            ) : null}
           </View>
           <ScrollView style={{ flex: 1 }}>
-            <View style={styles.diaryDiv}>
+            <View
+              style={[
+                styles.diaryDiv,
+                { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+              ]}
+            >
               <TextInput
                 style={styles.divText}
                 placeholder="오늘의 다이어리.."
@@ -113,12 +135,21 @@ export default function MainDiary() {
                       />
                     </TouchableOpacity>
                     <TouchableOpacity>
-                      <View style={[styles.container, styles.container_1]}>
+                      <View
+                        style={[
+                          styles.container_1,
+                          {
+                            backgroundColor: isDarkMode
+                              ? "white"
+                              : Colors.subPrimary,
+                          },
+                        ]}
+                      >
                         <Text>임시저장</Text>
                       </View>
                     </TouchableOpacity>
                   </View>
-                  <TouchableOpacity onPress={openDiv}>
+                  <TouchableOpacity onPress={() => openAlert()}>
                     <View style={styles.container}>
                       <Text>코멘트 요청하기 {">"}</Text>
                     </View>
@@ -206,15 +237,40 @@ export default function MainDiary() {
               {/* 감정 키워드 */}
               <View style={styles.emotionBox}>
                 <Text style={styles.subTitle}>감정 키워드</Text>
-                <View style={styles.emotionCircle}>
-                  <Text>기쁨</Text>
+                <View style={styles.emotionRow}>
+                  <View style={styles.emotionCircle}></View>
+                  <View style={styles.emotionColumn}>
+                    <View style={{ position: "relative" }}>
+                      <Text style={{ fontSize: 10, marginLeft: 20 }}>
+                        핵심 감정
+                      </Text>
+                      <Text style={{ fontSize: 22, marginLeft: 20 }}>기쁨</Text>
+                      <View
+                        style={{
+                          position: "absolute",
+                          bottom: -3, // 텍스트 아래 위치 조절 (더 내리려면 값을 늘림)
+                          left: 20, // marginLeft와 동일하게 설정
+                          right: 0, // 텍스트 길이만큼만 밑줄 표시
+                          height: 2, // 밑줄 두께 (더 진하게 하려면 값을 늘림)
+                          backgroundColor: "black", // 밑줄 색상
+                        }}
+                      />
+                    </View>
+                  </View>
                 </View>
               </View>
 
               {/* 코멘트 */}
               <View style={styles.commentBox}>
                 <Text style={styles.subTitle}>코멘트</Text>
-                <View style={styles.commentContainer}>
+                <View
+                  style={[
+                    styles.commentContainer,
+                    {
+                      backgroundColor: isDarkMode ? "white" : Colors.subPrimary,
+                    },
+                  ]}
+                >
                   <Text>
                     요즘 잠은 잘 자고 있나요? 쉬는 휴식 시간 확보도 중요해요!
                   </Text>
@@ -237,7 +293,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    justifyContent: "left",
+    justifyContent: "space-between",
     flexDirection: "row",
     marginBottom: 20,
   },
@@ -255,7 +311,7 @@ const styles = StyleSheet.create({
   },
   // diaryDiv 수정
   diaryDiv: {
-    backgroundColor: Colors.subPrimary,
+    // backgroundColor: Colors.subPrimary,
     opacity: 0.5,
     borderRadius: 10,
     minHeight: "100%", // 최소 높이 지정
@@ -264,24 +320,34 @@ const styles = StyleSheet.create({
   },
   // divText 수정
   divText: {
-    color: "grey",
-    fontSize: 15,
+    color: "black",
+    fontSize: 17,
     fontFamily: "roboto",
     fontWeight: "400",
     height: "100%", // 높이를 부모 컨테이너에 맞춤
     flex: 1, // TextInput이 diaryDiv 내의 공간을 모두 차지하도록
     textAlignVertical: "top", // 안드로이드에서 텍스트가 상단에서 시작하도록
   },
+  container_1: {
+    // "임시저장"
+    justifyContent: "space-between",
+    flexDirection: "row",
+    paddingHorizontal: 19,
+    paddingVertical: 11,
+    borderRadius: 10,
+    // backgroundColor: Colors.subPrimary,
+    marginVertical: 15,
+  },
   container: {
+    // "코멘트 요청하기"
     justifyContent: "space-between",
     flexDirection: "row",
     paddingHorizontal: 17,
     paddingVertical: 15,
     borderRadius: 10,
-    backgroundColor: Colors.subPrimary,
-  },
-  container_1: {
-    marginVertical: 15,
+    backgroundColor: "white",
+    borderWidth: 0.5,
+    borderColor: "rgba(158, 150, 150, .5)",
   },
   voice: {
     alignItems: "center",
@@ -311,12 +377,19 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   emotionBox: {
-    alignItems: "center",
+    alignItems: "left",
     marginVertical: 20,
   },
+  emotionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  emotionColumn: {
+    justifyContent: "center",
+  },
   emotionCircle: {
-    width: 80,
-    height: 80,
+    width: 70,
+    height: 70,
     borderRadius: 40,
     backgroundColor: "#FFC0CB",
     justifyContent: "center",
@@ -326,7 +399,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   commentContainer: {
-    backgroundColor: "#F5F5F5",
+    // backgroundColor: Colors.subPrimary,
     padding: 15,
     borderRadius: 10,
   },

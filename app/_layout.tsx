@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import React from "react";
+import { DarkModeProvider } from "./DarkModeContext";
 
 export default function RootLayout() {
   useFonts({
@@ -10,9 +11,11 @@ export default function RootLayout() {
   });
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-      {/*<Stack.Screen name="Todo" />*/}
-    </Stack>
+    <DarkModeProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        {/*<Stack.Screen name="Todo" />*/}
+      </Stack>
+    </DarkModeProvider>
   );
 }

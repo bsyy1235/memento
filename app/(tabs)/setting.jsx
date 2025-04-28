@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import React from "react";
+import { useDarkMode } from "../DarkModeContext";
 //import { SettingHome } from "./../../components/Settings/SettingHome";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -41,7 +42,8 @@ export default function setting() {
   };
 
   const [isPushMode, setIsPushMode] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  // const [isDarkMode, setIsDarkMode] = useState(false);
+  const { isDarkMode, setIsDarkMode } = useDarkMode();
 
   return (
     <View style={styles.main}>
@@ -50,15 +52,35 @@ export default function setting() {
         <Text style={styles.headerText}>설정</Text>
       </View>
       <TouchableOpacity>
-        <View style={styles.div}>
+        <View
+          style={[
+            styles.div,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
+        >
           <Text style={styles.divText}>내 정보 관리</Text>
         </View>
       </TouchableOpacity>
-      <View style={[styles.divOnOff]}>
+      <View
+        style={[
+          styles.divOnOff,
+          { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+        ]}
+      >
         <Text style={styles.divText}>푸쉬 알림 설정</Text>
-        <View style={styles.toggleContainer}>
+        <View
+          style={[
+            styles.toggleContainer,
+            { backgroundColor: isDarkMode ? "#e9e9e9" : "#FFECE5" },
+          ]}
+        >
           <TouchableOpacity
-            style={[styles.toggleButton, isPushMode && styles.selectedButton]}
+            style={[
+              styles.toggleButton,
+              isPushMode && {
+                backgroundColor: isDarkMode ? "#d3d3d3" : "#FFD8C2",
+              },
+            ]}
             onPress={() => setIsPushMode(true)}
           >
             <Text
@@ -68,7 +90,12 @@ export default function setting() {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.toggleButton, !isPushMode && styles.selectedButton]}
+            style={[
+              styles.toggleButton,
+              !isPushMode && {
+                backgroundColor: isDarkMode ? "#d3d3d3" : "#FFD8C2",
+              },
+            ]}
             onPress={() => setIsPushMode(false)}
           >
             <Text
@@ -79,11 +106,26 @@ export default function setting() {
           </TouchableOpacity>
         </View>
       </View>
-      <View style={[styles.divOnOff]}>
+      <View
+        style={[
+          styles.divOnOff,
+          { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+        ]}
+      >
         <Text style={styles.divText}>다크 모드</Text>
-        <View style={styles.toggleContainer}>
+        <View
+          style={[
+            styles.toggleContainer,
+            { backgroundColor: isDarkMode ? "#e9e9e9" : "#FFECE5" },
+          ]}
+        >
           <TouchableOpacity
-            style={[styles.toggleButton, isDarkMode && styles.selectedButton]}
+            style={[
+              styles.toggleButton,
+              isDarkMode && {
+                backgroundColor: isDarkMode ? "#d3d3d3" : "#FFD8C2",
+              },
+            ]}
             onPress={() => setIsDarkMode(true)}
           >
             <Text
@@ -93,7 +135,12 @@ export default function setting() {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.toggleButton, !isDarkMode && styles.selectedButton]}
+            style={[
+              styles.toggleButton,
+              !isDarkMode && {
+                backgroundColor: isDarkMode ? "#d3d3d3" : "#FFD8C2",
+              },
+            ]}
             onPress={() => setIsDarkMode(false)}
           >
             <Text
@@ -105,22 +152,42 @@ export default function setting() {
         </View>
       </View>
       <TouchableOpacity>
-        <View style={styles.div}>
+        <View
+          style={[
+            styles.div,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
+        >
           <Text style={styles.divText}>공지사항</Text>
         </View>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => router.push("../terms/terms")}>
-        <View style={styles.div}>
+        <View
+          style={[
+            styles.div,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
+        >
           <Text style={styles.divText}>이용약관</Text>
         </View>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => alertLogout()}>
-        <View style={styles.div}>
+        <View
+          style={[
+            styles.div,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
+        >
           <Text style={styles.divText}>로그아웃</Text>
         </View>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => alertProfile()}>
-        <View style={styles.div}>
+        <View
+          style={[
+            styles.div,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
+        >
           <Text style={styles.divText}>회원 탈퇴</Text>
         </View>
       </TouchableOpacity>
@@ -144,7 +211,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
   },
   div: {
-    backgroundColor: Colors.subPrimary,
+    // backgroundColor: Colors.subPrimary,
     opacity: 0.6,
     marginBottom: 18,
     paddingVertical: 18,
@@ -155,7 +222,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   divOnOff: {
-    backgroundColor: Colors.subPrimary,
+    // backgroundColor: Colors.subPrimary,
     opacity: 0.6,
     marginBottom: 18,
     paddingVertical: 10.5,
@@ -173,7 +240,7 @@ const styles = StyleSheet.create({
   },
   toggleContainer: {
     flexDirection: "row",
-    backgroundColor: "#FFECE5", // 전체 토글 박스 배경
+    // backgroundColor: "#FFECE5", // 전체 토글 박스 배경
     borderRadius: 20,
     overflow: "hidden",
   },
@@ -182,7 +249,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   selectedButton: {
-    backgroundColor: "#FFD8C2", // 선택된 버튼 배경
+    // backgroundColor: "#FFD8C2", // 선택된 버튼 배경
   },
   toggleText: {
     color: "#666666", // 기본 글자색
