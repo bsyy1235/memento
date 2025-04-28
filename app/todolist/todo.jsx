@@ -242,7 +242,7 @@ export default function todo() {
                           style={styles.button}
                         >
                           <Image
-                            source={require("../../assets/images/icon-recycle-bin.png")}
+                            source={require("../../assets/images/icons-trashcan.png")}
                             style={{
                               width: PixelRatio.getPixelSizeForLayoutSize(size),
                               height:

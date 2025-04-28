@@ -20,6 +20,8 @@ export default function MainDiary() {
   const [showFinalPage, setShowFinalPage] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false); // 키보드 표시 여부 상태 추가
 
+  const [diaryText, setDiaryText] = useState("");
+
   const { isDarkMode } = useDarkMode();
 
   // 키보드 이벤트 리스너 추가
@@ -79,6 +81,7 @@ export default function MainDiary() {
     );
   };
 
+  const size8 = 8;
   const size = 9;
   const size2 = 11;
   const size_mic = 35;
@@ -105,17 +108,26 @@ export default function MainDiary() {
               </TouchableOpacity>
             ) : null}
           </View>
-          <ScrollView style={{ flex: 1 }}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flexGrow: 1 }}
+          >
             <View
               style={[
                 styles.diaryDiv,
-                { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(255, 255, 255, 0.5)"
+                    : "rgba(255,230,213, 0.5)",
+                },
               ]}
             >
               <TextInput
-                style={styles.divText}
+                style={[styles.divText, { flex: 1 }]}
                 placeholder="오늘의 다이어리.."
                 multiline={true} // 여러 줄 입력 가능하도록
+                value={diaryText}
+                onChangeText={setDiaryText}
               />
             </View>
           </ScrollView>
@@ -151,7 +163,17 @@ export default function MainDiary() {
                   </View>
                   <TouchableOpacity onPress={() => openAlert()}>
                     <View style={styles.container}>
-                      <Text>코멘트 요청하기 {">"}</Text>
+                      <Text>코멘트 요청하기 </Text>
+                      <Image
+                        source={require("../../../assets/images/icons-right-arrow.png")}
+                        style={[
+                          {
+                            width: PixelRatio.getPixelSizeForLayoutSize(size8),
+                            height: PixelRatio.getPixelSizeForLayoutSize(size8),
+                            marginLeft: 2,
+                          },
+                        ]}
+                      />
                     </View>
                   </TouchableOpacity>
                 </View>
@@ -226,10 +248,21 @@ export default function MainDiary() {
                 <Text style={styles.headerText}>0월 00일 다이어리</Text>
               </View>
               <ScrollView>
-                <View style={styles.diaryDiv}>
+                <View
+                  style={[
+                    styles.diaryDiv,
+                    {
+                      backgroundColor: isDarkMode
+                        ? "rgba(255, 255, 255, 0.5)"
+                        : "rgba(255,230,213, 0.5)",
+                    },
+                  ]}
+                >
                   <TextInput
-                    style={styles.divText}
+                    style={[styles.divText, { flex: 1 }]}
                     editable={false} // 다이어리 수정 못하게
+                    multiline={true}
+                    value={diaryText}
                   />
                 </View>
               </ScrollView>
@@ -261,7 +294,7 @@ export default function MainDiary() {
               </View>
 
               {/* 코멘트 */}
-              <View style={styles.commentBox}>
+              <View>
                 <Text style={styles.subTitle}>코멘트</Text>
                 <View
                   style={[
@@ -271,10 +304,10 @@ export default function MainDiary() {
                     },
                   ]}
                 >
-                  <Text>
+                  <Text style={{ fontSize: 15 }}>
                     요즘 잠은 잘 자고 있나요? 쉬는 휴식 시간 확보도 중요해요!
+                    {"\n"}늘 멋진 하루를 위해 힘내는 모습이 인상 깊네요!
                   </Text>
-                  <Text>늘 멋진 하루를 위해 힘내는 모습이 인상 깊네요!</Text>
                 </View>
               </View>
             </View>
@@ -312,16 +345,17 @@ const styles = StyleSheet.create({
   // diaryDiv 수정
   diaryDiv: {
     // backgroundColor: Colors.subPrimary,
-    opacity: 0.5,
     borderRadius: 10,
-    minHeight: "100%", // 최소 높이 지정
+    // minHeight: "100%", // 최소 높이 지정
     flex: 1, // 부모 ScrollView의 공간을 모두 차지하도록 flex: 1 추가
     padding: 10,
+    borderWidth: 0.5,
+    borderColor: "rgba(158, 150, 150, .5)",
   },
   // divText 수정
   divText: {
     color: "black",
-    fontSize: 17,
+    fontSize: 15,
     fontFamily: "roboto",
     fontWeight: "400",
     height: "100%", // 높이를 부모 컨테이너에 맞춤
@@ -394,9 +428,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFC0CB",
     justifyContent: "center",
     alignItems: "center",
-  },
-  commentBox: {
-    marginTop: 20,
   },
   commentContainer: {
     // backgroundColor: Colors.subPrimary,

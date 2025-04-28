@@ -74,5 +74,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     // backgroundColor: Colors.subPrimary,
     opacity: 0.7,
+    borderWidth: 0.5,
+    borderColor: "rgba(158, 150, 150, .5)",
   },
 });

@@ -7,12 +7,13 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { Colors } from "./../../constants/Colors.ts";
 import { useDarkMode } from "../DarkModeContext";
 
 export default function FindPW() {
   const { isDarkMode } = useDarkMode();
+  const [agreeIdentifier, setAgreeIdentifier] = useState(false);
 
   const findEmail = () => {
     Alert.alert("이메일 찾기", "이메일 찾기를 진행하시겠습니까?", [
@@ -35,6 +36,36 @@ export default function FindPW() {
       },
     ]);
   };
+
+  const CustomCheckbox = ({ checked, onToggle }) => (
+    <TouchableOpacity
+      onPress={onToggle}
+      style={{
+        width: 20,
+        height: 20,
+        borderRadius: 3,
+        backgroundColor: isDarkMode ? "#e9e9e9" : "#ffcfae",
+        marginRight: 8,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      {checked && (
+        <View>
+          <Text
+            style={{
+              color: "grey",
+              fontWeight: "bold",
+              fontSize: 14,
+              marginTop: -4,
+            }}
+          >
+            ✓
+          </Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.main}>
@@ -106,12 +137,19 @@ export default function FindPW() {
         <View
           style={[
             styles.personalDiv,
-            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+            {
+              backgroundColor: isDarkMode ? "white" : Colors.subPrimary,
+              position: "relative",
+            },
           ]}
         >
-          <TextInput multiple style={styles.divText}>
-            ...
-          </TextInput>
+          <View style={styles.checkBoxContainer}>
+            <CustomCheckbox
+              checked={agreeIdentifier}
+              onToggle={() => setAgreeIdentifier(!agreeIdentifier)}
+            />
+            <Text>약관 동의</Text>
+          </View>
         </View>
       </View>
     </View>
@@ -156,17 +194,25 @@ const styles = StyleSheet.create({
   personalDiv: {
     // backgroundColor: Colors.subPrimary,
     opacity: 0.5,
-    paddingVertical: 22,
+    paddingVertical: 5,
     paddingHorizontal: 22,
     borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    height: 200,
+    // justifyContent: "",
   },
   divText: {
     color: "grey",
     fontSize: 15,
     fontFamily: "roboto",
     fontWeight: "400",
+  },
+  checkBoxContainer: {
+    position: "absolute",
+    bottom: 10,
+    right: 10,
+    flexDirection: "row",
+    alignItems: "center",
   },
 });
