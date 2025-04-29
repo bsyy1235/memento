@@ -39,6 +39,7 @@ export default function setting() {
         text: "아니오",
       },
     ]);
+    router.push('../login/login')
   };
 
   const [isPushMode, setIsPushMode] = useState(false);
