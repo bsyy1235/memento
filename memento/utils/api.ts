@@ -26,13 +26,19 @@ export async function login(email: string, password: string) {
   form.append("grant_type", "password");
 
   const response = await api.post("/api/auth/login/access-token", form, {
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
   });
 
   const token = response.data.access_token;
-  setAccessToken(token);
+  console.log("🎯 access_token:", token);
+
+  try {
+    setAccessToken(token); // 혹시 여기에 문제가 있는지 로그로 확인
+    console.log("✅ setAccessToken 호출 성공");
+  } catch (e) {
+    console.log("❌ setAccessToken 에서 에러:", e);
+  }
+
   return response.data;
 }
 

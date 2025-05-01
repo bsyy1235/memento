@@ -5,6 +5,7 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { login } from "../../utils/api";
@@ -12,7 +13,6 @@ import { login } from "../../utils/api";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userInfo, setUserInfo] = useState(null);
 
   const router = useRouter();
   const Login = async () => {
@@ -22,12 +22,13 @@ export default function Login() {
     }
 
     try {
-      const res = await login(email, password); // 로그인 API 호출
+      const res = await login(email, password);
       console.log("✅ 로그인 성공:", res.access_token);
       Alert.alert("로그인 성공!");
-      router.push("../(tabs)/home"); // 홈으로 이동
+      router.replace("/home");
     } catch (err) {
-      Alert.alert("로그인 실패", "이메일 또는 비밀번호가 올바르지 않습니다.");
+      console.log("❌ 로그인 전체 실패:", err);
+      Alert.alert("로그인 실패", "문제가 발생했습니다.");
     }
   };
   const SignUp = () => {
