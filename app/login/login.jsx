@@ -1,18 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { login, getUserMe } from '../utils/api';
 
 export default function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [userInfo, setUserInfo] = useState(null);
+
   const router = useRouter();
   const Login=() => {router.push('../home')};
   const SignUp=() => { router.push('./SignUp')};
   const Passwd=() => {router.push('./findPW')};
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>로그인</Text>
       <View style={styles.inputContainer}>
-        <TextInput style={styles.input} placeholder="이메일" />
-        <TextInput style={styles.input} placeholder="비밀번호" secureTextEntry />
+        <TextInput 
+            style={styles.input} 
+            placeholder="이메일" 
+            value = {email}
+            onChangeText={setEmail}
+            autoCapitalize='none'
+          
+        />
+        <TextInput 
+            style={styles.input} 
+            placeholder="비밀번호" 
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry 
+        />
         <TouchableOpacity style={styles.button} onPress={Login}>
           <Text style={styles.buttontext}>로그인</Text>
         </TouchableOpacity>
