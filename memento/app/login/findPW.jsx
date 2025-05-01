@@ -1,0 +1,262 @@
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  StatusBar,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import React, { useState } from "react";
+import { Colors } from "./../../constants/Colors.ts";
+import { useDarkMode } from "../DarkModeContext";
+
+import { updatePassword } from "../../utils/api.ts"; // 경로 맞게 조정
+
+export default function FindPW() {
+  const { isDarkMode } = useDarkMode();
+  const [agreeIdentifier, setAgreeIdentifier] = useState(false);
+
+  const [email, setEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+
+  const findEmail = () => {
+    Alert.alert("이메일 찾기", "이메일 찾기를 진행하시겠습니까?", [
+      {
+        text: "네",
+      },
+      {
+        text: "아니오",
+      },
+    ]);
+  };
+
+  const sendMessage = () => {
+    Alert.alert("인증번호", "인증번호를 요청하시겠습니까까?", [
+      {
+        text: "네",
+      },
+      {
+        text: "아니오",
+      },
+    ]);
+  };
+
+  const resetPassword = async () => {
+    if (!agreeIdentifier) {
+      Alert.alert("알림", "약관에 동의해주세요.");
+      return;
+    }
+
+    try {
+      await updatePassword(currentPassword, newPassword);
+      Alert.alert("성공", "비밀번호가 변경되었습니다.");
+    } catch (err) {
+      Alert.alert("오류", err.message || "비밀번호 변경에 실패했습니다.");
+    }
+  };
+
+  const CustomCheckbox = ({ checked, onToggle }) => (
+    <TouchableOpacity
+      onPress={onToggle}
+      style={{
+        width: 20,
+        height: 20,
+        borderRadius: 3,
+        backgroundColor: isDarkMode ? "#e9e9e9" : "#ffcfae",
+        marginRight: 8,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      {checked && (
+        <View>
+          <Text
+            style={{
+              color: "grey",
+              fontWeight: "bold",
+              fontSize: 14,
+              marginTop: -4,
+            }}
+          >
+            ✓
+          </Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.main}>
+      <StatusBar style="auto" />
+      <View style={styles.header}>
+        <Text style={styles.headerText}>비밀번호 찾기</Text>
+      </View>
+      <View>
+        <View style={styles.subheader}>
+          <Text>이메일</Text>
+          <TouchableOpacity onPress={() => findEmail()}>
+            <Text>이메일 찾기</Text>
+          </TouchableOpacity>
+        </View>
+        <View
+          style={[
+            styles.div,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
+        >
+          <TextInput
+            placeholder="가입 이메일 *"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            style={styles.divText}
+          />
+        </View>
+      </View>
+      <View>
+        <View style={styles.subheader}>
+          <Text>인증번호</Text>
+          <TouchableOpacity onPress={() => sendMessage()}>
+            <Text>인증번호 발송</Text>
+          </TouchableOpacity>
+        </View>
+        <View
+          style={[
+            styles.div,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
+        >
+          <TextInput
+            style={styles.divText}
+            placeholder="인증번호 *"
+            value={verificationCode}
+            onChangeText={setVerificationCode}
+            keyboardType="number-pad"
+          />
+        </View>
+      </View>
+      <View>
+        <View style={styles.subheader}>
+          <Text>비밀번호 확인</Text>
+        </View>
+        <View
+          style={[
+            styles.div,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
+        >
+          <TextInput
+            style={styles.divText}
+            placeholder="비밀번호 재설정 *"
+            secureTextEntry={true}
+            value={newPassword}
+            onChangeText={setNewPassword}
+          />
+        </View>
+      </View>
+      <View>
+        <View style={styles.subheader}>
+          <Text>개인정보 처리 방침</Text>
+        </View>
+        <View
+          style={[
+            styles.personalDiv,
+            {
+              backgroundColor: isDarkMode ? "white" : Colors.subPrimary,
+              position: "relative",
+            },
+          ]}
+        >
+          <View style={styles.checkBoxContainer}>
+            <CustomCheckbox
+              checked={agreeIdentifier}
+              onToggle={() => setAgreeIdentifier(!agreeIdentifier)}
+            />
+            <Text>약관 동의</Text>
+          </View>
+        </View>
+      </View>
+      <TouchableOpacity style={styles.button} onPress={resetPassword}>
+        <Text style={styles.buttontext}>비밀번호 재설정</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  main: {
+    marginVertical: 50,
+    marginHorizontal: 22,
+  },
+  header: {
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    marginTop: 60,
+    marginBottom: 40,
+  },
+  subheader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+    marginHorizontal: 4,
+    opacity: 0.5,
+  },
+  headerText: {
+    fontFamily: "roboto",
+    fontSize: 30,
+  },
+  div: {
+    // backgroundColor: Colors.subPrimary,
+    opacity: 0.5,
+    marginBottom: 13,
+    paddingVertical: 5,
+    paddingHorizontal: 22,
+    borderRadius: 100,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  personalDiv: {
+    // backgroundColor: Colors.subPrimary,
+    opacity: 0.5,
+    paddingVertical: 5,
+    paddingHorizontal: 22,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    height: 200,
+    // justifyContent: "",
+  },
+  divText: {
+    color: "grey",
+    fontSize: 15,
+    fontFamily: "roboto",
+    fontWeight: "400",
+  },
+  checkBoxContainer: {
+    position: "absolute",
+    bottom: 10,
+    right: 10,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  //GPT가 생성한 것. //내가 따로 만들기
+  button: {
+    marginTop: 20,
+    paddingVertical: 12,
+    backgroundColor: "#FFB677",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+
+  buttontext: {
+    fontSize: 16,
+    color: "#fff",
+    fontWeight: "bold",
+  },
+});
