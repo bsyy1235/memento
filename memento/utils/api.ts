@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // const BASE_URL = "http://127.0.0.1:8000"; // 백엔드 서버 주소
-const BASE_URL = "http://192.168.45.132:8000";
+const BASE_URL = "http://192.168.45.132:8000"; // 내 PC (ipconfig)
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -44,12 +44,16 @@ export async function registerUser(user: {
   gender: "male" | "female";
   age_group: "10대" | "20대" | "30대" | "40대" | "50대" | "60대 이상";
 }) {
+  console.log("📡 회원가입 API 요청 시도:", user);
+
   try {
     const response = await api.post("/api/user/signup", user);
+    console.log("✅ 성공 응답:", response.data);
     return response.data;
   } catch (error: any) {
     if (error.response) {
       // 서버 응답에 에러가 포함된 경우
+      console.log("❌ 회원가입 실패:", error);
       throw new Error(
         error.response.data.detail?.[0]?.msg || "회원가입에 실패했습니다."
       );

@@ -40,6 +40,7 @@ export default function SignUp() {
   }
 
   const handleSignUp = async () => {
+    console.log("🔔 회원가입 버튼 눌림"); //작동 함!
     // 필수 입력 필드 검증
     const requiredFields = [
       { name: "닉네임", value: nickname },

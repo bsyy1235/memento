@@ -25,7 +25,7 @@ export default function Login() {
       const res = await login(email, password); // 로그인 API 호출
       console.log("✅ 로그인 성공:", res.access_token);
       Alert.alert("로그인 성공!");
-      router.push("../home"); // 홈으로 이동
+      router.push("../(tabs)/home"); // 홈으로 이동
     } catch (err) {
       Alert.alert("로그인 실패", "이메일 또는 비밀번호가 올바르지 않습니다.");
     }
