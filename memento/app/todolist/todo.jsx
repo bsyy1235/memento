@@ -18,6 +18,13 @@ import DraggableFlatList from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler"; // ScrollView를 포함함.
 import { useDarkMode } from "../DarkModeContext";
 
+import {
+  createTodo,
+  getTodosByDate,
+  updateTodo,
+  deleteTodoById,
+} from "../../utils/api";
+
 const STORAGE_KEY = "@toDos";
 
 export default function todo() {
@@ -44,23 +51,37 @@ export default function todo() {
     loadToDos();
   }, []);
 
-  const addTodo = async () => {
-    if (text === "") {
-      return;
-    }
-    // save to-do
-    const newTodo = {
-      id: Date.now().toString(),
-      text,
-      completed: false,
-      // ...todos,
-      // [Date.now()]: { text },
-    };
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
+    getTodosByDate(today).then((res) => {
+      const mapped = Array.isArray(res)
+        ? res.map((t) => ({
+            id: t.id,
+            text: t.content,
+            completed: t.is_done,
+          }))
+        : [];
+      setTodos(mapped);
+    });
+  }, []);
 
-    const newTodos = [...todos, newTodo];
-    setTodos(newTodos);
-    await saveTodos(newTodos);
-    setText("");
+  const addTodo = async () => {
+    if (text.trim() === "") return;
+
+    const today = new Date().toISOString().split("T")[0];
+
+    try {
+      const newTodoFromServer = await createTodo(text, false, today);
+      const newTodo = {
+        id: newTodoFromServer.id,
+        text: newTodoFromServer.content,
+        completed: newTodoFromServer.is_done,
+      };
+      setTodos([...todos, newTodo]);
+      setText("");
+    } catch (err) {
+      Alert.alert("에러", "할 일 생성을 못했습니다.");
+    }
   };
 
   const deleteTodo = (id) => {
@@ -69,22 +90,30 @@ export default function todo() {
       {
         text: "네",
         onPress: async () => {
-          // const newTodos = { ...todos };
-          const newTodos = todos.filter((todo) => todo.id !== id);
-          // delete newTodos[id];
-          setTodos(newTodos);
-          await saveTodos(newTodos);
+          try {
+            await deleteTodoById(id);
+            setTodos(todos.filter((todo) => todo.id !== id));
+          } catch (err) {
+            Alert.alert("에러", "삭제에 실패했습니다.");
+          }
         },
       },
     ]);
   };
 
   const markDone = async (id) => {
-    const updated = todos.map((todo) =>
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    );
-    setTodos(updated);
-    await saveTodos(updated);
+    const todo = todos.find((t) => t.id === id);
+    try {
+      const updated = await updateTodo(id, undefined, !todo.completed);
+      const mapped = {
+        id: updated.id,
+        text: updated.content,
+        completed: updated.is_done,
+      };
+      setTodos(todos.map((t) => (t.id === id ? mapped : t)));
+    } catch (err) {
+      Alert.alert("에러", "체크상태에 에러가 발생했습니다.");
+    }
   };
 
   const getCompletionRate = () => {
@@ -188,18 +217,27 @@ export default function todo() {
                         value={editingText}
                         onChangeText={setEditingText}
                         onSubmitEditing={async () => {
-                          const updatedTodos = todos.map((t) =>
-                            t.id === item.id
-                              ? {
-                                  ...t,
-                                  text: editingText,
-                                }
-                              : t
-                          );
-                          setTodos(updatedTodos);
-                          await saveTodos(updatedTodos);
-                          setEditingKey(null); // 수정모드 종료
-                          setEditingText("");
+                          try {
+                            const updated = await updateTodo(
+                              item.id,
+                              editingText
+                            );
+
+                            const mapped = {
+                              id: updated.id,
+                              text: updated.content,
+                              completed: updated.is_done,
+                            };
+
+                            setTodos(
+                              todos.map((t) => (t.id === item.id ? mapped : t))
+                            );
+                            setEditingKey(null); // 수정모드 종료
+                            setEditingText("");
+                          } catch (err) {
+                            Alert.alert("에러", "할 일 수정에 실패했어요.");
+                            console.error("수정 요청 실패", err);
+                          }
                         }}
                         returnKeyType="done"
                         autoFocus

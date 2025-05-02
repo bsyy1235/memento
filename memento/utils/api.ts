@@ -35,11 +35,14 @@ export async function login(email: string, password: string) {
   try {
     setAccessToken(token); // 혹시 여기에 문제가 있는지 로그로 확인
     console.log("✅ setAccessToken 호출 성공");
-  } catch (e) {
-    console.log("❌ setAccessToken 에서 에러:", e);
+    return response.data;
+  } catch (err: any) {
+    console.log(
+      "❌ 로그인 요청 실패 (상세):",
+      err.response?.data || err.message
+    );
+    throw err;
   }
-
-  return response.data;
 }
 
 // 회원가입 요청
@@ -87,4 +90,43 @@ export async function updatePassword(
     }
     throw new Error("비밀번호 변경에 실패했습니다.");
   }
+}
+
+// todo
+export async function createTodo(
+  content: string,
+  is_done: boolean,
+  date: string
+) {
+  const res = await api.post("/api/todo/", { content, is_done, date });
+  return res.data;
+}
+
+export async function getTodosByDate(date: string) {
+  const res = await api.get("/api/todo/", { params: { date } });
+  return res.data;
+}
+
+export async function updateTodo(
+  todo_id: string,
+  content?: string,
+  is_done?: boolean
+) {
+  const body: any = {};
+  if (content !== undefined) body.content = content;
+  if (is_done !== undefined) body.is_done = is_done;
+
+  const res = await api.patch(`/api/todo/${todo_id}`, body);
+
+  // ⛳ PATCH 응답은 data 배열이므로 그 안에서 꺼내야 함
+  if (res.data?.data?.length) {
+    return res.data.data[0];
+  }
+
+  throw new Error("Unexpected response format from PATCH /api/todo/{id}");
+}
+
+export async function deleteTodoById(todo_id: string) {
+  const res = await api.delete(`/api/todo/${todo_id}`);
+  return res.data;
 }

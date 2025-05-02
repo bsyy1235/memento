@@ -10,6 +10,9 @@ import {
 import { useRouter } from "expo-router";
 import { login } from "../../utils/api";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { setAccessToken } from "../../utils/api";
+
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,8 +26,13 @@ export default function Login() {
 
     try {
       const res = await login(email, password);
-      console.log("✅ 로그인 성공:", res.access_token);
       Alert.alert("로그인 성공!");
+      console.log("✅ 로그인 성공:", res.access_token);
+
+      // ✅ 토큰 저장
+      await AsyncStorage.setItem("access_token", res.access_token);
+      setAccessToken(res.access_token);
+
       router.replace("/home");
     } catch (err) {
       console.log("❌ 로그인 전체 실패:", err);

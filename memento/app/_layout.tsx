@@ -1,7 +1,10 @@
 import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
-import React from "react";
+import React, { useEffect } from "react";
 import { DarkModeProvider } from "./DarkModeContext";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { setAccessToken } from "../utils/api";
 
 export default function RootLayout() {
   useFonts({
@@ -9,6 +12,16 @@ export default function RootLayout() {
     "roboto-medium": require("./../assets/fonts/Roboto-Medium.ttf"),
     "roboto-semibold": require("./../assets/fonts/Roboto-SemiBold.ttf"),
   });
+
+  useEffect(() => {
+    const restoreToken = async () => {
+      const token = await AsyncStorage.getItem("access_token");
+      if (token) {
+        setAccessToken(token);
+      }
+    };
+    restoreToken();
+  }, []);
 
   return (
     <DarkModeProvider>
