@@ -14,6 +14,8 @@ from app.models.todo import (
 from app.crud import todo as todo_crud
 from app.services import todo as todo_service
 
+#from fastapi import Body #추가
+
 router = APIRouter(prefix="/todo", tags=["todo"])
 
 
@@ -51,7 +53,7 @@ def update_todo(
     session: SessionDep,
     current_user: CurrentUser,
     todo_id: uuid.UUID,
-    todo_in: TodoUpdate,
+    todo_in: TodoUpdate #= Body(...), #추가
 ) -> Any:
     """
     Update a todo and adjust Day's completed_todo if needed.

@@ -99,12 +99,50 @@ export async function createTodo(
   date: string
 ) {
   const res = await api.post("/api/todo/", { content, is_done, date });
-  return res.data;
+  return {
+    id: res.data.id,
+    text: res.data.content,
+    completed: res.data.is_done,
+  };
 }
 
+type RawTodo = {
+  id: string;
+  content: string;
+  is_done: boolean;
+  day_id: string;
+};
+
+// export async function getTodosByDate(date: string) {
+//   const res = await api.get(`/api/day/${date}`);
+//   console.log("📦 /api/day 응답:", res.data); // ⬅️ 추가
+
+//   const allDays = res.data?.data;
+
+//   if (!Array.isArray(allDays)) return [];
+
+//   const day = allDays.find((d) => d.date === date); // ✅ 오늘 날짜와 정확히 일치하는 Day만 선택
+
+//   if (!day || !Array.isArray(day.todos)) return [];
+
+//   return day.todos.map((t: RawTodo) => ({
+//     id: t.id,
+//     text: t.content,
+//     completed: t.is_done,
+//   }));
+// }
+
 export async function getTodosByDate(date: string) {
-  const res = await api.get("/api/todo/", { params: { date } });
-  return res.data;
+  const res = await api.get(`/api/day/${date}`);
+  const day = res.data; // ✅ 바로 객체
+
+  if (!day || !Array.isArray(day.todos)) return [];
+
+  return (day.todos as RawTodo[]).map((t) => ({
+    id: t.id,
+    text: t.content,
+    completed: t.is_done,
+  }));
 }
 
 export async function updateTodo(
@@ -118,15 +156,21 @@ export async function updateTodo(
 
   const res = await api.patch(`/api/todo/${todo_id}`, body);
 
-  // ⛳ PATCH 응답은 data 배열이므로 그 안에서 꺼내야 함
-  if (res.data?.data?.length) {
-    return res.data.data[0];
-  }
+  const updated = res.data; // ✅ 더 이상 .data[0] 아님
+  if (!updated) throw new Error("수정된 todo를 받을 수 없습니다.");
 
-  throw new Error("Unexpected response format from PATCH /api/todo/{id}");
+  return {
+    id: updated.id,
+    text: updated.content,
+    completed: updated.is_done,
+  };
 }
 
 export async function deleteTodoById(todo_id: string) {
   const res = await api.delete(`/api/todo/${todo_id}`);
-  return res.data;
+  return {
+    id: res.data.id,
+    text: res.data.content,
+    completed: res.data.is_done,
+  };
 }
