@@ -1,45 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
+import { getStatisticsByYear } from '../../utils/stat';
+import api from '../../utils/api';
 
 export default function Stat() {
   const [selectedYear, setSelectedYear] = useState(2025);
-  
-  // 가상의 통계 데이터
-  const statistics = {
-    totalDiaries: 142,
+  const [statistics, setStatistics] = useState({
+    totalDiaries: 0,
     emotionData: {
-      happy: 48,
-      neutral: 62,
-      sad: 18,
-      tired: 14
-    }
-  };
-  
-  // 가상의 연간 감정 데이터 (2025년)
-  // 형식: monthlyData[월-1][일-1] = 감정 코드 ('happy', 'neutral', 'sad', 'tired' 또는 null)
-  const generateMonthlyData = () => {
-    const data = Array(12).fill().map(() => Array(31).fill(null));
-    
-    // 샘플 데이터 채우기
-    const emotions = ['happy', 'neutral', 'sad', 'tired'];
-    
-    // 1월~4월 데이터 (현재까지의 데이터라고 가정)
-    for (let month = 0; month < 12; month++) {
-      const daysInMonth = new Date(selectedYear, month + 1, 0).getDate();
-      for (let day = 0; day < daysInMonth; day++) {
-        // 랜덤으로 70%의 날에만 감정 데이터 있음
-        if (Math.random() > 0.3) {
-          const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
-          data[month][day] = randomEmotion;
-        }
-      }
-    }
-    
-    return data;
-  };
-  
-  const monthlyData = generateMonthlyData();
-  
+      happy: 0,
+      neutral: 0,
+      sad: 0,
+      tired: 0,
+      },
+  });
+  const [monthlyData, setMonthlyData] = useState(
+    Array(12).fill().map(() => Array(31).fill(null))
+  );
+ 
   // 월 이름 리스트
   const monthNames = [
     '1월', '2월', '3월', '4월', '5월', '6월',
@@ -67,9 +45,60 @@ export default function Stat() {
   const changeYear = (delta) => {
     setSelectedYear(selectedYear + delta);
   };
+
+ // API 호출 함수
+ useEffect(() => {
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const data = await getStatisticsByYear(selectedYear);
+      
+      setStatistics({
+        totalDiaries: data?.totalDiaries ?? 0,
+        emotionData: data?.emotionData ?? {
+          happy: 0,
+          neutral: 0,
+          sad: 0,
+          tired: 0
+        }
+      });
+
+      setMonthlyData(data?.monthlyEmotionData ?? Array(12).fill().map(() => Array(31).fill(null)));
+    } catch (error) {
+      console.error('통계 불러오기 실패:', error);
+      setError('통계 데이터를 불러오는데 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, [selectedYear]);
+
+
+const [message, setMessage] = useState('');
+
+const getHello = async () => {
+  try {
+    const response = await api.get('/api/hello');
+    return response.data;
+  } catch (error) {
+    console.error('API 호출 에러:', error);
+    throw error;
+  }
+};
+
+useEffect(() => {
+  getHello()
+    .then((data) => setMessage(data.message))
+    .catch(() => setMessage('서버 연결 실패'));
+}, []);
   
   return (
     <SafeAreaView style={styles.container}>
+      <Text>{message}</Text>
       <ScrollView style={styles.scrollContainer}>
         <Text style={styles.header}>통계</Text>
         
