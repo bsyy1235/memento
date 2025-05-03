@@ -10,10 +10,15 @@ import {
 import { useRouter } from "expo-router";
 import { login } from "../../utils/api";
 
+import { Colors } from "./../../constants/Colors.ts";
+import { useDarkMode } from "../DarkModeContext";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAccessToken } from "../../utils/api";
 
 export default function Login() {
+  const { isDarkMode } = useDarkMode();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -51,28 +56,44 @@ export default function Login() {
       <Text style={styles.header}>로그인</Text>
       <View style={styles.inputContainer}>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
           placeholder="이메일"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
         />
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
           placeholder="비밀번호"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
         />
-        <TouchableOpacity style={styles.button} onPress={Login}>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            { backgroundColor: isDarkMode ? "white" : "#ffe6d5" },
+          ]}
+          onPress={Login}
+        >
           <Text style={styles.buttontext}>로그인</Text>
         </TouchableOpacity>
         <View style={styles.buttonView}>
           <TouchableOpacity onPress={Passwd}>
-            <Text style={styles.buttontext}>비밀번호 찾기 &gt;</Text>
+            <Text style={[styles.buttontext, { opacity: 0.5 }]}>
+              비밀번호 찾기 &gt;
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={SignUp}>
-            <Text style={styles.buttontext}>회원가입 &gt;</Text>
+            <Text style={[styles.buttontext, { opacity: 0.5 }]}>
+              회원가입 &gt;
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -83,16 +104,18 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 40,
+    marginVertical: 40,
+    // marginTop: 40,
     justifyContent: "center",
     width: "100%",
     padding: 20,
   },
   header: {
     marginTop: "40%",
-    fontSize: 24,
-    marginBottom: 35,
+    fontSize: 30,
+    marginBottom: 20,
     textAlign: "center",
+    fontFamily: "roboto",
   },
   inputContainer: {
     justifyContent: "center",
@@ -100,15 +123,12 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#fff8f3",
+    opacity: 0.5,
     marginBottom: 15,
     padding: 15,
     borderRadius: 100,
-    backgroundColor: "#fff8f3",
   },
   button: {
-    backgroundColor: "#ffe6d5",
     borderRadius: 100,
     alignItems: "center",
     paddingVertical: 13,
@@ -117,7 +137,6 @@ const styles = StyleSheet.create({
   buttontext: {
     color: "#4d4d4d",
     fontSize: 13,
-    fontWeight: "bold",
   },
   buttonView: {
     flexDirection: "row",

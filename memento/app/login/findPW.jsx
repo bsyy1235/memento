@@ -221,6 +221,10 @@ const styles = StyleSheet.create({
     marginTop: 60,
     marginBottom: 40,
   },
+  headerText: {
+    fontFamily: "roboto",
+    fontSize: 30,
+  },
   subheader: {
     flexDirection: "row",
     alignItems: "center",
@@ -228,10 +232,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginHorizontal: 4,
     opacity: 0.5,
-  },
-  headerText: {
-    fontFamily: "roboto",
-    fontSize: 30,
   },
   div: {
     // backgroundColor: Colors.subPrimary,
@@ -271,15 +271,13 @@ const styles = StyleSheet.create({
   //GPT가 생성한 것. //내가 따로 만들기
   button: {
     marginTop: 20,
-    paddingVertical: 12,
-    backgroundColor: "#FFB677",
-    borderRadius: 8,
+    paddingVertical: 13,
+    backgroundColor: Colors.subPrimary,
+    borderRadius: 100,
     alignItems: "center",
   },
-
   buttontext: {
     fontSize: 16,
-    color: "#fff",
-    fontWeight: "bold",
+    opacity: 0.8,
   },
 });

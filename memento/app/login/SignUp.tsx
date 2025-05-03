@@ -12,6 +12,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { registerUser } from "../../utils/api";
 
+import { Colors } from "../../constants/Colors";
+import { useDarkMode } from "../DarkModeContext";
+
 export default function SignUp() {
   const router = useRouter();
   const [nickname, setNickname] = useState("");
@@ -21,6 +24,8 @@ export default function SignUp() {
   const [verificationCode, setVerificationCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const { isDarkMode } = useDarkMode();
 
   const Back = () => {
     router.push("./login");
@@ -101,71 +106,163 @@ export default function SignUp() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={Back}>
+      <TouchableOpacity
+        onPress={Back}
+        style={{ marginTop: 10, marginLeft: 10 }}
+      >
         <Ionicons name="chevron-back-outline" size={30} color={"#888888"} />
       </TouchableOpacity>
-      <ScrollView style={styles.scrollContainer}>
-        <Text style={styles.title}>회원가입</Text>
-        <Text style={styles.linkText}>닉네임</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="닉네임 *"
-          value={nickname}
-          onChangeText={setNickname}
-        />
-        <Text style={styles.linkText}>성별</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="성별 *"
-          value={gender}
-          onChangeText={setGender}
-        />
-        <Text style={styles.linkText}>나이</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="나이 *"
-          value={age}
-          onChangeText={setAge}
-          keyboardType="numeric"
-        />
-        <Text style={styles.linkText}>이메일</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="이메일 *"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-        />
-        <View style={styles.buttonView}>
-          <Text style={styles.linkText}>이메일 인증</Text>
-          <TouchableOpacity onPress={sendVerificationCode}>
-            <Text style={styles.linkText}>인증번호 발송</Text>
-          </TouchableOpacity>
+      <ScrollView
+        style={styles.main}
+        contentContainerStyle={{ paddingBottom: 50 }}
+      >
+        <View style={styles.header}>
+          <Text style={styles.headerText}>회원가입</Text>
         </View>
-        <TextInput
-          style={styles.input}
-          placeholder="인증번호 *"
-          value={verificationCode}
-          onChangeText={setVerificationCode}
-        />
-        <Text style={styles.linkText}>비밀번호</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="비밀번호 *"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        <Text style={styles.linkText}>비밀번호 확인</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="비밀번호 확인 *"
-          secureTextEntry
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
 
-        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+        <View>
+          <View style={styles.subheader}>
+            <Text>닉네임</Text>
+          </View>
+          <View
+            style={[
+              styles.div,
+              { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+            ]}
+          >
+            <TextInput
+              style={styles.divText}
+              placeholder="닉네임 *"
+              value={nickname}
+              onChangeText={setNickname}
+            />
+          </View>
+        </View>
+        <View>
+          <View style={styles.subheader}>
+            <Text>성별</Text>
+          </View>
+          <View
+            style={[
+              styles.div,
+              { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+            ]}
+          >
+            <TextInput
+              style={styles.divText}
+              placeholder="성별 *"
+              value={gender}
+              onChangeText={setGender}
+            />
+          </View>
+        </View>
+        <View>
+          <View style={styles.subheader}>
+            <Text>나이</Text>
+          </View>
+          <View
+            style={[
+              styles.div,
+              { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+            ]}
+          >
+            <TextInput
+              style={styles.divText}
+              placeholder="나이 *"
+              value={age}
+              onChangeText={setAge}
+              keyboardType="numeric"
+            />
+          </View>
+        </View>
+
+        <View>
+          <View style={styles.subheader}>
+            <Text>이메일</Text>
+          </View>
+          <View
+            style={[
+              styles.div,
+              { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+            ]}
+          >
+            <TextInput
+              style={styles.divText}
+              placeholder="이메일 *"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+            />
+          </View>
+        </View>
+        <View>
+          <View style={[styles.subheader, styles.buttonView]}>
+            <Text>인증번호</Text>
+            <TouchableOpacity onPress={sendVerificationCode}>
+              <Text>인증번호 발송</Text>
+            </TouchableOpacity>
+          </View>
+          <View
+            style={[
+              styles.div,
+              { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+            ]}
+          >
+            <TextInput
+              style={styles.divText}
+              placeholder="인증번호 *"
+              value={verificationCode}
+              onChangeText={setVerificationCode}
+              keyboardType="number-pad"
+            />
+          </View>
+        </View>
+
+        <View>
+          <View style={styles.subheader}>
+            <Text>비밀번호</Text>
+          </View>
+          <View
+            style={[
+              styles.div,
+              { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+            ]}
+          >
+            <TextInput
+              style={styles.divText}
+              placeholder="비밀번호 *"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
+        </View>
+        <View>
+          <View style={styles.subheader}>
+            <Text>비밀번호</Text>
+          </View>
+          <View
+            style={[
+              styles.div,
+              { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+            ]}
+          >
+            <TextInput
+              style={styles.divText}
+              placeholder="비밀번호 *"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
+          </View>
+        </View>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            { backgroundColor: isDarkMode ? "white" : "#ffe6d5" },
+          ]}
+          onPress={handleSignUp}
+        >
           <Text style={styles.buttontext}>회원가입</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -174,47 +271,70 @@ export default function SignUp() {
 }
 
 const styles = StyleSheet.create({
+  main: {
+    marginHorizontal: 22,
+  },
+  header: {
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    marginTop: 60,
+    marginBottom: 40,
+  },
+  headerText: {
+    fontFamily: "roboto",
+    fontSize: 30,
+  },
   container: {
     marginTop: 10,
     justifyContent: "center",
     width: "100%",
-    padding: 20,
-  },
-  scrollContainer: {
-    padding: 20,
   },
   title: {
     fontSize: 24,
     marginBottom: 35,
     textAlign: "center",
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#fff8f3",
-    marginBottom: 15,
-    padding: 10,
+
+  div: {
+    // backgroundColor: Colors.subPrimary,
+    opacity: 0.5,
+    marginBottom: 13,
+    paddingVertical: 5,
+    paddingHorizontal: 22,
     borderRadius: 100,
-    backgroundColor: "#fff8f3",
-  },
-  button: {
-    backgroundColor: "#ffe6d5",
-    borderRadius: 100,
+    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 13,
+    justifyContent: "space-between",
+  },
+  subheader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+    marginHorizontal: 4,
+    opacity: 0.5,
+  },
+  divText: {
+    fontSize: 15,
+    fontFamily: "roboto",
+    fontWeight: "400",
+  },
+
+  button: {
     marginTop: 20,
     marginBottom: "10%",
+    paddingVertical: 13,
+    backgroundColor: Colors.subPrimary,
+    borderRadius: 100,
+    alignItems: "center",
   },
   buttontext: {
-    color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "bold",
+    fontSize: 16,
+    opacity: 0.8,
   },
   buttonView: {
     flexDirection: "row",
     justifyContent: "space-between",
-  },
-  linkText: {
-    color: "#4d4d4d",
-    marginBottom: 6,
   },
 });
