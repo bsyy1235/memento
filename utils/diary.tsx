@@ -1,0 +1,206 @@
+import  api from './api';
+import { loadAccessToken } from "./token";
+import { format } from "date-fns";
+
+interface Diary {
+  id: string;
+  date: string;
+  content: string;
+  audio_path: string | null;
+  day_id: string;
+  day?: { emotion?: string };
+  comment?: { content?: string };
+}
+
+// 모든 다이어리 조회 함수
+export const getAllDiaries = async () => {
+  try {
+    const token = await loadAccessToken();
+    const response = await api.get<{ data: Diary[] }>('/api/diary/');
+    
+    // API 응답이 data 배열을 포함하는지 확인
+    if (response.data && Array.isArray(response.data.data)) {
+      return response.data.data.map(diary => ({
+        id: diary.id,
+        date: diary.date,
+        content: diary.content || "",
+        audio_path: diary.audio_path || null,
+        day_id: diary.day_id,
+        day: diary.day || null,
+        comment: diary.comment || null,
+        emotion: diary.day?.emotion || null,
+        hasAudio: !!diary.audio_path
+      }));
+    } else {
+      // API가 예상치 못한 형식으로 응답한 경우
+      console.error('예상치 못한 API 응답 형식:', response.data);
+      return [];
+    }
+  } catch (error: any) {
+    console.error('다이어리 목록 조회 실패:', error?.response?.data || error.message);
+    return [];
+  }
+};
+
+// 특정 날짜의 일기 조회 함수
+export const getDiaryByDate = async (date: string) => {
+    try {
+      const response = await api.get(`/api/diary/${date}`);
+      const token = await loadAccessToken();
+  
+      return {
+        id: response.data.id,
+        day_id: response.data.day_id,
+        audio_path: response.data.audio_path ?? null,
+        content: response.data.content ?? "",
+        date: response.data.date,
+        day: response.data.day ?? null,
+        comment: response.data.comment ?? null,
+        emotion: response.data.emotion ?? null,
+      };
+    } catch (error: any) {
+      if (error?.response?.data?.detail === "Diary not found") {
+        console.warn(`📭 일기 없음: ${date}`);
+        return null;
+      }
+  
+      console.error(`일기 조회 실패 (${date}):`, error?.response?.data || error.message);
+      return null;
+    }
+  };
+
+// 특정 날짜의 Day 정보(Todo 포함) 조회 함수
+export const getDayByDate = async (date: string) => {
+  try {
+    const response = await api.get(`/api/diary/${date}`,);
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 다이어리 임시저장
+export async function saveDiary({
+    date,
+    content,
+    audio_path = null,
+    audio_file = null,
+  }: {
+    date: string;
+    content: string;
+    audio_path?: string | null;
+    audio_file?: any;
+  }) {
+    const token = await loadAccessToken();
+    const formData = new FormData();
+    formData.append("diary_date", date);
+    formData.append("content", content ?? "empty"); 
+
+    formData.append("day", JSON.stringify({ wrote_diary: true }));
+    if (audio_file) {
+      formData.append("audio_path", audio_path ?? "empty");
+      formData.append("audio_file", {
+        uri: audio_file.uri,
+        name: audio_file.name,
+        type: audio_file.type,
+      } as any);
+    } else {
+        formData.append("audio_path", "empty" as any);
+      }
+  
+    try {
+      const response = await api.post(`/api/diary/?diary_date=${date}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+        console.log("saveDiary 완료")
+      return {
+        id: response.data.id,
+        day_id : response.data.day_id,
+        audio_path: response.data.audio_path ?? null,
+        content: response.data.content ?? "",
+        date: response.data.date,
+      };
+    } catch (error: any) {
+      console.error("saveDiary 오류:", error?.response?.data || error.message || error);
+      return null;
+    }
+  };
+
+  // 다이어리 최종저장
+  export async function finalSave({
+    date,
+    content,
+    audio_path = null,
+    audio_file = null,
+  }: {
+    date: string;
+    content: string;
+    audio_path?: string | null;
+    audio_file?: any;
+  }) {
+      const token = await loadAccessToken();
+      const formData = new FormData();
+
+      formData.append("diary_date", date);
+      formData.append("content", content ?? "empty");
+      formData.append("day", JSON.stringify({ wrote_diary: true }));
+
+      if (audio_file) {
+      formData.append("audio_path", audio_path ?? "empty");
+      formData.append("audio_file", {
+        uri: audio_file.uri,
+        name: audio_file.name,
+        type: audio_file.type,
+      } as any);
+      } else {
+        formData.append("audio_path", "empty" as any);
+      }
+    
+    try {
+      const response = await api.post(`/api/diary/finalize/?diary_date=${date}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+        console.log("finalSave 완료")
+      return {
+        id: response.data.id,
+        day_id : response.data.day_id,
+        audio_path: response.data.audio_path ?? null,
+        content: response.data.content ?? "",
+        date: response.data.date,
+      };
+    } catch (error: any) {
+      console.error("finalSave 오류:", error?.response?.data || error.message || error);
+      return null;
+    }
+  };
+
+  // emotion 수정 함수
+  export async function updateEmotion({
+    date,
+    changeEmotion,
+    mark_diary_written,
+  }: {
+    date: string;
+    changeEmotion: string;
+    mark_diary_written: boolean;
+  }){
+    const token = await loadAccessToken();
+    const body: any = {};
+    body.day_date = date;
+    body.emotion = changeEmotion;
+    body.mark_diary_written = mark_diary_written;
+
+    try{
+      const res = await api.patch(`/api/day/${date}/emotion`, body);
+       return res.data;
+    }
+    catch(error : any){
+      console.error("감정 업데이트 실패:", error?.response?.data || error.message);
+      throw error;
+    }
+  };
