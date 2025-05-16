@@ -10,7 +10,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from "expo-router";
 import { handleDateSelect } from "../terms/diaryFunction.jsx";
 import { useCalendarLogic } from "../terms/useCalendarLogic.jsx";
-import { Colors } from "./../../constants/Colors.ts";
+import { Colors } from "../../constants/Colors";
 
 export default function Calendar() {
   const {
