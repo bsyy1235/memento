@@ -12,6 +12,40 @@ interface Diary {
   comment?: { content?: string };
 }
 
+interface Day {
+  id: string;
+  date: string;
+  wrote_diary: boolean;
+  emotion: string | null;
+  todos: boolean;
+}
+
+// 캘린더 다이어리 조회 함수
+export const getDiaryHome = async () :  Promise<Day[]> => {
+  try {
+    const token = await loadAccessToken();
+    const response = await api.get<{ data: any[] }>('/api/diary/');
+
+    if (response.data && Array.isArray(response.data.data)) {
+      return response.data.data.map(diary => ({
+        id: diary.id,
+        date: diary.date,
+        wrote_diary: diary.day?.wrote_diary,
+        emotion: diary.day?.emotion || null,
+        todos: Array.isArray(diary.day?.todos)
+          ? diary.day.todos.map((todo: any) => todo.is_done)
+          : [], // ✅ diary.todos가 없으면 빈 배열
+      }));
+    } else {
+      console.error('예상치 못한 API 응답 형식:', response.data);
+      return [];
+    }
+  } catch (error: any) {
+    console.error('다이어리 목록 조회 실패:', error?.response?.data || error.message);
+    return [];
+  }
+};
+
 // 모든 다이어리 조회 함수
 export const getAllDiaries = async () => {
   try {
@@ -57,6 +91,7 @@ export const getDiaryByDate = async (date: string) => {
         day: response.data.day ?? null,
         comment: response.data.comment ?? null,
         emotion: response.data.emotion ?? null,
+        todo: response.data.todo ?? null,
       };
     } catch (error: any) {
       if (error?.response?.data?.detail === "Diary not found") {
@@ -68,17 +103,6 @@ export const getDiaryByDate = async (date: string) => {
       return null;
     }
   };
-
-// 특정 날짜의 Day 정보(Todo 포함) 조회 함수
-export const getDayByDate = async (date: string) => {
-  try {
-    const response = await api.get(`/api/diary/${date}`,);
-
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
 
 // 다이어리 임시저장
 export async function saveDiary({
@@ -158,9 +182,10 @@ export async function saveDiary({
       } else {
         formData.append("audio_path", "empty" as any);
       }
-    
+  
+
     try {
-      const response = await api.post(`/api/diary/finalize/?diary_date=${date}`, formData, {
+      const response = await api.post(`/api/diary/finalize`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -196,7 +221,7 @@ export async function saveDiary({
     body.mark_diary_written = mark_diary_written;
 
     try{
-      const res = await api.patch(`/api/day/${date}/emotion`, body);
+      const res = await api.patch(`/api/day/${date}`, body);
        return res.data;
     }
     catch(error : any){

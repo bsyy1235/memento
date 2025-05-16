@@ -9,7 +9,10 @@ import {
   ScrollView,
 } from "react-native";
 import React, { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "./../../constants/Colors.ts";
+
+import { useRouter } from "expo-router";
 import { useDarkMode } from "../DarkModeContext";
 
 import { updatePassword } from "../../utils/api.ts"; // 경로 맞게 조정
@@ -90,8 +93,19 @@ export default function FindPW() {
     </TouchableOpacity>
   );
 
+  const router = useRouter();
+  const Back = () => {
+    router.push("./login");
+  };
+
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 50 }}>
+      <TouchableOpacity
+        onPress={Back}
+        style={{ marginTop: 20, marginLeft: 20 }}
+      >
+        <Ionicons name="chevron-back-outline" size={30} color={"#888888"} />
+      </TouchableOpacity>
       <View style={styles.main}>
         <StatusBar style="auto" />
         <View style={styles.header}>
@@ -179,28 +193,7 @@ export default function FindPW() {
             />
           </View>
         </View>
-        <View>
-          <View style={styles.subheader}>
-            <Text>개인정보 처리 방침</Text>
-          </View>
-          <View
-            style={[
-              styles.personalDiv,
-              {
-                backgroundColor: isDarkMode ? "white" : Colors.subPrimary,
-                position: "relative",
-              },
-            ]}
-          >
-            <View style={styles.checkBoxContainer}>
-              <CustomCheckbox
-                checked={agreeIdentifier}
-                onToggle={() => setAgreeIdentifier(!agreeIdentifier)}
-              />
-              <Text>약관 동의</Text>
-            </View>
-          </View>
-        </View>
+
         <TouchableOpacity style={styles.button} onPress={resetPassword}>
           <Text style={styles.buttontext}>비밀번호 재설정</Text>
         </TouchableOpacity>
@@ -211,7 +204,7 @@ export default function FindPW() {
 
 const styles = StyleSheet.create({
   main: {
-    marginVertical: 50,
+    marginVertical: 30,
     marginHorizontal: 22,
   },
   header: {
@@ -223,7 +216,7 @@ const styles = StyleSheet.create({
   },
   headerText: {
     fontFamily: "roboto",
-    fontSize: 30,
+    fontSize: 26,
   },
   subheader: {
     flexDirection: "row",
@@ -260,6 +253,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: "roboto",
     fontWeight: "400",
+    flex: 1,
   },
   checkBoxContainer: {
     position: "absolute",

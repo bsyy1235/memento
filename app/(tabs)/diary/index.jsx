@@ -41,9 +41,9 @@ import {
 
     useEffect(() => {
       if (params?.date) {
-        const parsedDate = new Date(params.date); // '2025-05-05' 같은 string
+        const parsedDate = new Date(params.date);
         if (!isNaN(parsedDate)) {
-          setSelectedDate(parsedDate); // ✅ params.date로 초기화
+          setSelectedDate(parsedDate);
         }
       }
     }, [params?.date]);
@@ -96,6 +96,7 @@ import {
       }
     };
 
+    // 코멘트 요청
     const comment = () => {
       Alert.alert(
         "코멘트를 생성하면 더이상 일기를 수정할 수 없습니다.",
@@ -103,7 +104,7 @@ import {
         [
           {
             text: "네",
-            onPress: handleComment, // ✅ 함수만 전달
+            onPress: handleComment,
           },
           { text: "아니오", style: "cancel" },
         ]
@@ -145,7 +146,7 @@ import {
       setShowDateModal(false);
     };
     
-  
+    // 임시저장 버튼
     const handleSaveDiary = async () => {
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
       try {
@@ -156,6 +157,7 @@ import {
       }
     };
 
+    // 임시저장 데이터 있으면 불러오기
     useEffect(() => {
       const fetchDiary = async () => {
         const formattedDate = format(selectedDate, "yyyy-MM-dd");

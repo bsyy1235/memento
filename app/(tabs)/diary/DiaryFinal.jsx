@@ -287,7 +287,7 @@ export default function DiaryFinal({ route }) {
     diaryDiv: {
       // backgroundColor: Colors.subPrimary,
       borderRadius: 10,
-      // minHeight: "100%", // 최소 높이 지정
+      minHeight: "30%", // 최소 높이 지정
       flex: 1, // 부모 ScrollView의 공간을 모두 차지하도록 flex: 1 추가
       padding: 10,
       borderWidth: 0.5,
