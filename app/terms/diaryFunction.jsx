@@ -6,10 +6,11 @@ import { Colors } from "../../constants/Colors";
 import { getDiaryByDate } from "../../utils/diary"
 import { useRouter } from "expo-router";
 
-  // 날짜 형식 변환 함수 (월 날짜 형식으로)
+// 날짜 형식 변환 함수 (월 날짜 형식으로)
 export const formatDateHeader = (date) => {
-    const month = date.getMonth() + 1; // JavaScript 월은 0부터 시작하므로 +1
-    const day = date.getDate();
+    const parsedDate = new Date(date);
+    const month = parsedDate.getMonth() + 1; // JavaScript 월은 0부터 시작하므로 +1
+    const day = parsedDate.getDate();
     return `${month}월 ${day}일 다이어리`;
   };
 
@@ -18,6 +19,41 @@ export const formatDateHeader = (date) => {
     const date = new Date(year, month, day);
     return date > today;
   };
+
+export const createYearButtons = ({ tempDate, setTempDate, today, styles }) => {
+  const years = [];
+  const currentYear = today.getFullYear();
+  
+  for (let i = currentYear - 2; i <= currentYear; i++) {
+    years.push(
+      <TouchableOpacity
+        key={`year-${i}`}
+        style={[
+          styles.dateButton,
+          tempDate.getFullYear() === i && styles.selectedDateButton
+        ]}
+        onPress={() => {
+          const newDate = new Date(tempDate);
+          newDate.setFullYear(i);
+          
+          if (newDate > today) {
+            newDate.setMonth(today.getMonth());
+            newDate.setDate(today.getDate());
+          }
+          
+          setTempDate(newDate);
+        }}
+      >
+        <Text style={[
+          tempDate.getFullYear() === i && styles.selectedDateText
+        ]}>
+          {i}년
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+  return years;
+};
 
   export const createMonthButtons = ({ tempDate, setTempDate, today, styles }) => {
     const months = [];
@@ -88,7 +124,7 @@ export const formatDateHeader = (date) => {
     }
   };
   
-  export const createDayButtons = ({ tempDate, setTempDate, today, styles }) => {
+export const createDayButtons = ({ tempDate, setTempDate, today, styles }) => {
     const days = [];
     const lastDay = new Date(tempDate.getFullYear(), tempDate.getMonth() + 1, 0).getDate();
     const currentYear = tempDate.getFullYear();
@@ -136,6 +172,7 @@ export const formatDateHeader = (date) => {
     visible,
     onCancel,
     onConfirm,
+    createYearButtons,
     createMonthButtons,
     createDayButtons,
     styles,
@@ -152,6 +189,13 @@ export const formatDateHeader = (date) => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>날짜 선택</Text>
+
+            <Text style={styles.dateLabel}>년도</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
+            <View style={styles.dateButtonContainer}>
+              {createYearButtons()}
+            </View>
+            </ScrollView>
   
             <Text style={styles.dateLabel}>월</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>

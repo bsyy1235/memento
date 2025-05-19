@@ -130,7 +130,7 @@ export default function SignUp() {
       });
 
       Alert.alert("회원가입 성공!", "로그인 페이지로 이동합니다.");
-      router.push("./login"); // TOS -> login으로 수정
+      router.push("./TOS"); // TOS -> login으로 수정
     } catch (error: unknown) {
       console.error("회원가입 에러:", error);
       

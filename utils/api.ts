@@ -1,9 +1,10 @@
 import axios from "axios";
 import { storeAccessToken } from "./token";
 
-//const BASE_URL = "https://coolchick.site"; // 백엔드 서버 주소
-const BASE_URL = "http://192.168.0.10:8000"; // 내 PC (ipconfig)
+const BASE_URL = "http://coolchick.site/"; // 백엔드 서버 주소
+//const BASE_URL = "http://192.168.0.10:8000"; // 내 PC (ipconfig)
 
+export const SERVER_URL = BASE_URL;
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -17,7 +18,7 @@ export default api;
 
 // 인터페이스
 // Todo 인터페이스
-type RawTodo = {
+export type RawTodo = {
   id: string;
   content: string;
   is_done: boolean; 
@@ -33,12 +34,6 @@ export type Day = {
   completed_todo: number;
   id: string;
   todos: RawTodo[];
-};
-
-export type Comment = {
-  id: string;
-  diary_id: string;
-  content: string;
 };
 
 let accessToken: string | null = null;
