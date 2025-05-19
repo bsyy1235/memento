@@ -4,6 +4,7 @@ import { storeAccessToken } from "./token";
 const BASE_URL = "http://coolchick.site/"; // 백엔드 서버 주소
 //const BASE_URL = "http://192.168.0.10:8000"; // 내 PC (ipconfig)
 
+export const SERVER_URL = BASE_URL;
 
 const api = axios.create({
   baseURL: BASE_URL,

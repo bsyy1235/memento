@@ -1,4 +1,4 @@
-import  api from './api';
+import  api, {SERVER_URL} from './api';
 import { loadAccessToken } from "./token";
 import { format } from "date-fns";
 
@@ -81,7 +81,6 @@ export const getDiaryByDate = async (date: string) => {
     try {
       const response = await api.get(`/api/diary/${date}`);
       const token = await loadAccessToken();
-  
       return {
         id: response.data.id,
         day_id: response.data.day_id,
@@ -91,18 +90,32 @@ export const getDiaryByDate = async (date: string) => {
         day: response.data.day ?? null,
         comment: response.data.comment ?? null,
         emotion: response.data.emotion ?? null,
-        todo: response.data.todo ?? null,
       };
     } catch (error: any) {
       if (error?.response?.data?.detail === "Diary not found") {
         console.warn(`📭 일기 없음: ${date}`);
         return null;
       }
-  
       console.error(`일기 조회 실패 (${date}):`, error?.response?.data || error.message);
       return null;
     }
   };
+
+// 음성 파일 받아오기
+export const getAudioFile = async (file_path: string) => {
+  const url = encodeURI(file_path); // 공백/한글 대비 encodeURI
+  try {
+    const response = await api.get(`/${url}`);
+
+    if (!response) {
+      throw new Error(`오디오 파일 요청 실패: ${response}`);
+    }
+    return SERVER_URL+`${decodeURIComponent(file_path)}`;
+  } catch (error) {
+    console.error("오디오 파일 가져오기 오류:", error);
+    throw error;
+  }
+};
 
 // 다이어리 임시저장
 export async function saveDiary({
@@ -125,9 +138,9 @@ export async function saveDiary({
     if (audio_file) {
       formData.append("audio_path", audio_path ?? "empty");
       formData.append("audio_file", {
-        uri: audio_file.uri,
-        name: audio_file.name,
-        type: audio_file.type,
+        uri: audio_path,
+        name: "recording.wav",
+        type: "audio/wav",
       } as any);
     } else {
         formData.append("audio_path", "empty" as any);
@@ -139,6 +152,8 @@ export async function saveDiary({
           "Content-Type": "multipart/form-data",
         },
       });
+        console.log("audio_path: ",audio_path);
+        console.log("audio_file: ",audio_file);
         console.log("saveDiary 완료")
       return {
         id: response.data.id,
@@ -173,16 +188,16 @@ export async function saveDiary({
       formData.append("day", JSON.stringify({ wrote_diary: true }));
 
       if (audio_file) {
-      formData.append("audio_path", audio_path ?? "empty");
-      formData.append("audio_file", {
-        uri: audio_file.uri,
-        name: audio_file.name,
-        type: audio_file.type,
+        let uri = audio_path;
+        formData.append("audio_path", audio_path ?? "empty");
+        formData.append("audio_file", {
+          uri: audio_path,
+          name: "recording.wav",
+          type: "audio/wav",
       } as any);
       } else {
         formData.append("audio_path", "empty" as any);
       }
-  
 
     try {
       const response = await api.post(`/api/diary/finalize`, formData, {

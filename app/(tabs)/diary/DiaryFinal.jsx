@@ -3,10 +3,14 @@ import {View,Text,TextInput,StyleSheet,StatusBar,Alert,TouchableOpacity,ScrollVi
 import React, { useState, useEffect } from "react";
 import { Colors } from "../../../constants/Colors";
 import { useDarkMode } from "../../DarkModeContext.jsx";
-import { getDiaryByDate, updateEmotion} from '../../../utils/diary';
+import { getDiaryByDate, updateEmotion, getAudioFile } from '../../../utils/diary';
 import { format } from 'date-fns';
-import {formatDateHeader, createMonthButtons, createDayButtons, DatePickerModal} from "../../terms/diaryFunction.jsx"
+import {formatDateHeader,createYearButtons, createMonthButtons, createDayButtons, DatePickerModal} from "../../terms/diaryFunction.jsx"
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import * as FileSystem from 'expo-file-system';
+import { Audio } from 'expo-av';
+import { SERVER_URL } from "../../../utils/api";
+import { useSoundLogic } from "../../terms/useSoundLogic";
 
 export default function DiaryFinal({ route }) {
     const [showNewDiv, setShowNewDiv] = useState(false);
@@ -15,11 +19,23 @@ export default function DiaryFinal({ route }) {
     const [comment, setComment] = useState("");
     const [date, setDate] = useState("");
     const [loading, setLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const { isDarkMode } = useDarkMode();
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [showDateModal, setShowDateModal] = useState(false);
     const [tempDate, setTempDate] = useState(new Date());
+    
+    const [recordingUri, setRecordingUri] = useState(null);
+    const [recordingDuration, setRecordingDuration] = useState(0);
+
+    const {
+        sound, setSound,
+        isPlaying, setIsPlaying,
+        currentPosition, setCurrentPosition,
+        togglePlayback,
+        setupAudioStatusUpdates,
+        formatTime,} = useSoundLogic();
 
     const router = useRouter();
     if (!router) return null;
@@ -35,6 +51,15 @@ export default function DiaryFinal({ route }) {
       }
     }, [params?.date]);
     
+    // 컴포넌트 언마운트 시 사운드 정리
+    useEffect(() => {
+      return () => {
+        if (sound) {
+          sound.unloadAsync();
+        }
+      };
+    }, [sound]);
+
   const showDatepicker = () => {
     setTempDate(selectedDate);
     setShowDateModal(true);
@@ -61,28 +86,68 @@ export default function DiaryFinal({ route }) {
     Alert.alert("오류", "감정 업데이트에 실패했습니다.");
     };
   };
+
   
-  useEffect(() => {
-        const fetchDiary = async () => {
-          const formattedDate = format(selectedDate, "yyyy-MM-dd");
-          try {
-            setLoading(true);
-            const res = await getDiaryByDate(formattedDate);
-            if (res) {
-              setDiaryText(res.content || "");
-              setDate(res.date || "");
-              if (res.day) { setEmotion(res.day.emotion || ""); }
-              if (res.comment) { setComment(res.comment.content || "");}
-            }
-            setLoading(false);
-          } catch (err) {
-            console.warn("📭 일기 불러오기 실패:", err);
-            setError("일기를 불러오는 데 실패했습니다. 다시 시도해주세요.");
-            setLoading(false);
+ useEffect(() => {
+  const fetchDiary = async () => {
+    const formattedDate = format(selectedDate, "yyyy-MM-dd");
+    try {
+      setLoading(true);
+      const res = await getDiaryByDate(formattedDate);
+      if (res) {
+        setDiaryText(res.content || "");
+        setDate(res.date || "");
+        if (res.day) { setEmotion(res.day.emotion || ""); }
+        if (res.comment) { setComment(res.comment.content || "");}
+      }
+      if (res?.audio_path && res.audio_path !== "empty") {
+        const file_path = res.audio_path;
+        const audioUrl = await getAudioFile(file_path);
+        console.log("audioUrl",audioUrl);
+
+        const fileName = file_path.split('/').pop() || 'audio.wav';
+        const localUri = FileSystem.documentDirectory + fileName;
+        console.log("localUri",localUri);
+        try {
+          await FileSystem.downloadAsync(audioUrl, localUri);
+          const fileInfo = await FileSystem.getInfoAsync(localUri);
+          if (!fileInfo.exists) {
+            setRecordingUri(null); setRecordingDuration(0); setLoading(false);
+            Alert.alert("오디오 파일 다운로드 실패");
+            return;
           }
-        };
-        fetchDiary();
-      }, [selectedDate]);
+          // setRecordingUri는 로컬 파일로!
+          setRecordingUri(localUri);
+
+          // 기존 사운드 언로드
+          if (sound) await sound.unloadAsync();
+          const { sound: loadedSound } = await Audio.Sound.createAsync({ uri: audioUrl });
+          setSound(loadedSound);
+          setupAudioStatusUpdates(loadedSound);
+          const status = await loadedSound.getStatusAsync();
+          if (status?.durationMillis) {
+            setRecordingDuration(Math.floor(status.durationMillis / 1000));
+          } else setRecordingDuration(0);
+
+        } catch (e) {
+          setRecordingUri(null); setRecordingDuration(0); setLoading(false);
+          Alert.alert("오디오 파일을 불러올 수 없습니다.");
+          console.log('[AUDIO LOAD ERROR]', e, localUri);
+          return;
+        }
+      } else {
+        setRecordingUri(null); setRecordingDuration(0);
+        if (sound) { await sound.unloadAsync(); setSound(null); }
+      }
+      setLoading(false);
+    } catch (err) {
+      console.warn("📭 일기 불러오기 실패:", err);
+      setError("일기를 불러오는 데 실패했습니다. 다시 시도해주세요.");
+      setLoading(false);
+    }
+  };
+  fetchDiary();
+}, [selectedDate]);
   
   // 감정에 따른 색상 처리
   const getEmotionColor = () => {
@@ -96,14 +161,30 @@ export default function DiaryFinal({ route }) {
     }
   };
   
-  if (loading) {
-    return (
-      <View style={[styles.main, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={{ marginTop: 10 }}>일기를 불러오는 중...</Text>
-      </View>
-    );
-  }
+  const renderLoading = () => {
+      if (!isLoading) return null;
+      
+      return (
+        <View style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.4)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10
+        }}>
+          <View style={{
+            backgroundColor: 'white',
+            padding: 20,
+            borderRadius: 10,
+            alignItems: 'center'
+          }}>
+            <Text style={{ marginBottom: 10 }}>로딩 중입니다...</Text>
+            <ActivityIndicator size="large" color={Colors.primary} />
+          </View>
+        </View>
+      );
+    };
   
   if (error) {
     return (
@@ -127,6 +208,7 @@ export default function DiaryFinal({ route }) {
   return (
     <View style={styles.main}>
       <StatusBar style="auto" />  
+      {renderLoading()}
         <ScrollView>
           <View>
           <View style={styles.header}>
@@ -137,6 +219,27 @@ export default function DiaryFinal({ route }) {
                 style={{ width: 20, height: 20, marginLeft: 10 }}
               />
             </TouchableOpacity>
+
+            { recordingUri && recordingUri !== "empty" && (
+            <View style={styles.audioControls}>
+              <TouchableOpacity onPress={togglePlayback} style={styles.micButton}>
+                <Image
+                  source={
+                    isPlaying 
+                      ? require("../../../assets/images/icons-pause-50.png")
+                      : require("../../../assets/images/microphone.png")
+                  }
+                  style={{ width: 18, height: 18 }}
+                />
+              </TouchableOpacity>
+              {/* 재생 시간 표시 */}
+              {recordingDuration > 0 && (
+                <Text style={styles.audioTimeText}>
+                  {formatTime(currentPosition)} / {formatTime(recordingDuration * 1000)}
+                </Text>
+              )}
+            </View>
+            )}
             
             {showNewDiv && (
               <TouchableOpacity onPress={() => setShowNewDiv(false)}>
@@ -156,6 +259,8 @@ export default function DiaryFinal({ route }) {
             visible={showDateModal}
             onCancel={handleCancelDate}
             onConfirm={handleConfirmDate}
+            createYearButtons={() => 
+              createYearButtons({ tempDate, setTempDate, today, styles })}
             createMonthButtons={() =>
               createMonthButtons({ tempDate, setTempDate, today, styles })
             }
@@ -521,6 +626,21 @@ export default function DiaryFinal({ route }) {
     marginTop: 10,
     fontSize: 14,
     color: '#999',
+  },
+  micButton: {
+    padding: 8,
+    marginLeft: 10,
+    marginRight: 'auto',
+  },
+  // 새로 추가된 스타일
+  audioControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  audioTimeText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 8,
   },
     
 });
