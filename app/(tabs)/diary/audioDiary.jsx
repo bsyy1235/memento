@@ -368,7 +368,8 @@ const handleComment = async () => {
                 ]}
               >
                 <TextInput
-                   style={styles.divText}
+                  placeholder="음성 녹음 중입니다.."
+                  style={styles.divText}
                   editable={false}
                   multiline
                   value={diaryText}
@@ -606,8 +607,7 @@ const handleComment = async () => {
     },
     diaryDiv: {
       borderRadius: 10,
-      minHeight: "30%",
-      flex: 1,
+      height: "60%",
       padding: 10,
       borderWidth: 0.5,
       borderColor: "rgba(158, 150, 150, .5)",
@@ -617,8 +617,7 @@ const handleComment = async () => {
       fontSize: 15,
       fontFamily: "roboto",
       fontWeight: "400",
-      height: "100%",
-      flex: 1,
+      height: "60%",
       textAlignVertical: "top",
     },
     container_1: {

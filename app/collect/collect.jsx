@@ -6,12 +6,14 @@ import { Image } from 'react-native';
 import { getAllDiaries } from '../../utils/diary';
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { useDarkMode } from "../DarkModeContext";
 
 export default function Collect() {
   const router = useRouter();
   const [diaries, setDiaries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isDarkMode, setIsDarkMode } = useDarkMode();
 
   const emotionColors = {
     '기쁨': '#FFCBEB',
@@ -97,12 +99,21 @@ export default function Collect() {
                 {diary.content}
               </Text>
 
+              {diary.emotion ? (
+                  <View style={[
+                    styles.emotionContainer,
+                    { backgroundColor: emotionColors[diary.emotion] || '#EEE' }
+                  ]}>
+                   <Text style={styles.emotionText}>{diary.emotion}</Text>
+                  </View>
+                ) : null}
+
               {/* 버튼 컨테이너 */}
               <View style={styles.buttonsContainer}>
                 {/* 음성 버튼 (음성이 있는 경우에만 표시) */}
                 {diary.hasAudio && (
                   <TouchableOpacity
-                    style={styles.audioButton}
+                    style={stysles.audioButton}
                     onPress={() => handlePlayAudio(diary.id)}
                   >
                     <Image
@@ -216,5 +227,9 @@ const styles = StyleSheet.create({
     color: "#4d4a49",
   },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 10, fontSize: 16, color: '#666' }
+  loadingText: { marginTop: 10, fontSize: 16, color: '#666' },
+  emotionContainer: { position: 'absolute', top: 12, right: 12, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4 },
+  emotionText: { fontSize: 12, color: '#4d4a49' },
+  audioButton: { marginBottom: 2, width: 20, height: 20, right: 7, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  audioIcon: { width: 20, height: 20, resizeMode: 'contain' },
 }); 
