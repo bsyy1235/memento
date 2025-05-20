@@ -194,7 +194,13 @@ export default function FindPW() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={resetPassword}>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+          ]}
+          onPress={resetPassword}
+        >
           <Text style={styles.buttontext}>비밀번호 재설정</Text>
         </TouchableOpacity>
       </View>

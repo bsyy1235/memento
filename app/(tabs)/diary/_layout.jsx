@@ -8,7 +8,6 @@ export default function DiaryLayout() {
       }}
     >
       <Stack.Screen name="index" />
-      <Stack.Screen name="DiaryFinal" />
     </Stack>
   );
 }
