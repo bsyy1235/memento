@@ -41,32 +41,26 @@ export default function todo() {
   const { isDarkMode } = useDarkMode();
 
   const onChangeText = (payload) => setText(payload); // save
-  const saveTodos = async (toSave) => {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-  };
-  const loadToDos = async () => {
-    const s = await AsyncStorage.getItem(STORAGE_KEY); // String
-    const parsed = JSON.parse(s);
-    setTodos(Array.isArray(parsed) ? parsed : []);
-    // "Save & Load" done.
-  };
-
-  useEffect(() => {
-    loadToDos();
-  }, []);
 
   useFocusEffect(
     useCallback(() => {
       const fetchTodosWithToken = async () => {
         const token = await AsyncStorage.getItem("access_token");
-        if (token) {
-          setAccessToken(token); // ✅ 다시 토큰 세팅
-          const today = new Date().toISOString().split("T")[0];
+        console.log("🧾 불러온 토큰:", token); // 이게 null이라면 저장 실패!
+        if (!token) {
+          Alert.alert("인증 오류", "로그인이 필요합니다.");
+          router.replace("../login/login.jsx"); // 💡 로그인 화면으로 이동
+          return;
+        }
+
+        setAccessToken(token); // ✅ 헤더 설정
+        const today = new Date().toISOString().split("T")[0];
+
+        try {
           const todos = await getTodosByDate(today);
           setTodos(todos);
-        } else {
-          console.warn("🔒 토큰이 없습니다. 로그인 필요");
-          setTodos([]); // 비인증 상태로 초기화
+        } catch (err) {
+          setTodos([]);
         }
       };
 
@@ -95,7 +89,7 @@ export default function todo() {
         onPress: async () => {
           try {
             await deleteTodoById(id);
-            setTodos(todos.filter((t) => t.id !== id));
+            setTodos((prevTodos) => prevTodos.filter((t) => t.id !== id)); // ✅ 상태 동기화
           } catch (err) {
             Alert.alert("에러", "삭제 실패");
           }
@@ -119,14 +113,6 @@ export default function todo() {
     if (total === 0) return 0;
     const done = todos.filter((todo) => todo.completed).length;
     return Math.round((done / total) * 100);
-  };
-
-  const toggleCheck = (id) => {
-    const updatedTodos = todos.map((todo) =>
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    );
-    setTodos(updatedTodos);
-    saveTodos(updatedTodos); // 저장 함수 추가
   };
 
   const size = 7;
@@ -177,7 +163,7 @@ export default function todo() {
           keyExtractor={(item) => item.id}
           onDragEnd={async ({ data }) => {
             setTodos(data);
-            await saveTodos(data); // 드래그 후 순서 저장 추가
+            // await saveTodos(data); // 드래그 후 순서 저장 추가
           }}
           renderItem={({ item, drag, isActive }) => (
             <TouchableOpacity

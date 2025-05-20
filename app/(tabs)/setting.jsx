@@ -13,33 +13,56 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { Colors } from "./../../constants/Colors";
 
+import { deleteUser } from "../../utils/api";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 export default function setting() {
-  const alertProfile = (id) => {
+  const alertProfile = () => {
     Alert.alert("회원 탈퇴를 진행할까요?", "데이터를 모두 잃게 됩니다.", [
       {
         text: "네",
-        /*onPress: async () => {
-          const newTodos = { ...todos };
-          delete newTodos[id];
-          setTodos(newTodos);
-          await saveTodos(newTodos);
-        },*/
+        onPress: () => {
+          (async () => {
+            try {
+              await deleteUser(); // ✅ API 호출
+              await AsyncStorage.removeItem("access_token"); // ✅ 토큰 제거
+              Alert.alert("탈퇴 완료", "회원 탈퇴가 완료되었습니다.");
+              router.replace("../login/login"); // ✅ 로그인 화면으로 이동
+            } catch (err) {
+              if (err instanceof Error) {
+                Alert.alert("오류", err.message);
+              } else {
+                Alert.alert("오류", "알 수 없는 에러가 발생했습니다.");
+              }
+            }
+          })();
+        },
       },
       {
         text: "아니오",
+        style: "cancel",
       },
     ]);
   };
-  const alertLogout = (id) => {
+
+  const alertLogout = () => {
     Alert.alert("로그아웃", "로그아웃 하시겠습니까?", [
       {
         text: "네",
+        onPress: async () => {
+          try {
+            await AsyncStorage.removeItem("access_token"); // ✅ access token 제거
+            router.replace("../login/login"); // ✅ 홈이 아닌 login으로 이동
+          } catch (e) {
+            Alert.alert("오류", "로그아웃에 실패했습니다.");
+          }
+        },
       },
       {
         text: "아니오",
       },
     ]);
-    router.push('../login/login')
   };
 
   const [isPushMode, setIsPushMode] = useState(false);
@@ -52,7 +75,7 @@ export default function setting() {
       <View style={styles.header}>
         <Text style={styles.headerText}>설정</Text>
       </View>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => router.push("../user/update")}>
         <View
           style={[
             styles.div,
