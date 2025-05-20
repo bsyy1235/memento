@@ -48,10 +48,14 @@ export default function Collect() {
     }
   };
 
-  const handleViewMore = (date, emotion) => {
-    const target = emotion
-      ? '../diary/DiaryFinal'
-      : '../diary';
+  const handleViewMore = (date, emotion,audio_path) => {
+    let target = "";
+    if(emotion)
+      target = "../diary/DiaryFinal";
+    else if(audio_path)
+      target = "../diary/audioDiary";
+    else
+      target = "../diary/textDiary";
     router.push({ pathname: target, params: { date } });
   };
 
@@ -98,7 +102,7 @@ export default function Collect() {
                   )}
                   <TouchableOpacity
                     style={styles.viewMoreButton}
-                    onPress={() => handleViewMore(diary.date, diary.emotion)}
+                    onPress={() => handleViewMore(diary.date, diary.emotion, diary.audio_path)}
                   >
                     <Text style={styles.viewMoreButtonText}>더보기</Text>
                   </TouchableOpacity>
