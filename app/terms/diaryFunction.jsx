@@ -1,10 +1,8 @@
 // utils/diaryFunction.jsx
 import React from "react";
-import { TouchableOpacity,StyleSheet, Text, View , Modal, ScrollView} from "react-native";
-import { format } from "date-fns";
+import { TouchableOpacity,StyleSheet, Text} from "react-native";
 import { Colors } from "../../constants/Colors";
-import { getDiaryByDate } from "../../utils/diary"
-import { useRouter } from "expo-router";
+
 
 // 날짜 형식 변환 함수 (월 날짜 형식으로)
 export const formatDateHeader = (date) => {
@@ -20,7 +18,8 @@ export const formatDateHeader = (date) => {
     return date > today;
   };
 
-export const createYearButtons = ({ tempDate, setTempDate, today, styles }) => {
+// DatePickerModal의 버튼 함수들
+export const createYearButtons = ({ tempDate, setTempDate, today}) => {
   const years = [];
   const currentYear = today.getFullYear();
   
@@ -55,7 +54,7 @@ export const createYearButtons = ({ tempDate, setTempDate, today, styles }) => {
   return years;
 };
 
-  export const createMonthButtons = ({ tempDate, setTempDate, today, styles }) => {
+  export const createMonthButtons = ({ tempDate, setTempDate, today }) => {
     const months = [];
     const currentYear = tempDate.getFullYear();
   
@@ -96,35 +95,8 @@ export const createYearButtons = ({ tempDate, setTempDate, today, styles }) => {
     }
     return months;
   };
-
-  // emotion이 존재할 시 DiaryFinal로 이동
-  export const handleDateSelect = async ({ date, router }) => {
-    const formattedDate = format(date, "yyyy-MM-dd");
   
-    try {
-      const res = await getDiaryByDate(formattedDate);
-  
-      if (res?.day?.emotion) {
-        router.push({
-          pathname: "/diary/DiaryFinal",
-          params: { date: formattedDate },
-        });
-      } else {
-        router.push({
-          pathname: "/(tabs)/diary",
-          params: { date: formattedDate },
-        });
-      }
-    } catch (err) {
-      console.warn("일기 불러오기 실패:", err);
-      router.push({
-        pathname: "/(tabs)/diary",
-        params: { date: formattedDate },
-      });
-    }
-  };
-  
-export const createDayButtons = ({ tempDate, setTempDate, today, styles }) => {
+export const createDayButtons = ({ tempDate, setTempDate, today}) => {
     const days = [];
     const lastDay = new Date(tempDate.getFullYear(), tempDate.getMonth() + 1, 0).getDate();
     const currentYear = tempDate.getFullYear();
@@ -168,94 +140,7 @@ export const createDayButtons = ({ tempDate, setTempDate, today, styles }) => {
   };
   
 
-  export const DatePickerModal = ({
-    visible,
-    onCancel,
-    onConfirm,
-    createYearButtons,
-    createMonthButtons,
-    createDayButtons,
-    styles,
-    tempDate,
-    router,
-  }) => {
-    return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={visible}
-        onRequestClose={onCancel}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>날짜 선택</Text>
-
-            <Text style={styles.dateLabel}>년도</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
-            <View style={styles.dateButtonContainer}>
-              {createYearButtons()}
-            </View>
-            </ScrollView>
-  
-            <Text style={styles.dateLabel}>월</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
-              <View style={styles.dateButtonContainer}>
-                {createMonthButtons()}
-              </View>
-            </ScrollView>
-  
-            <Text style={styles.dateLabel}>일</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
-              <View style={styles.dateButtonContainer}>
-                {createDayButtons()}
-              </View>
-            </ScrollView>
-  
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-                <Text style={styles.buttonText}>취소</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.confirmButton} 
-                onPress={() => handleDateSelect({ date: tempDate, router })}>
-                <Text style={styles.buttonText}>확인</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    );
-  };
-
   const styles = StyleSheet.create({
-    modalButtons: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginTop: 20,
-      },
-      modalTitle: {
-        fontSize: 20,
-        fontWeight: "bold",
-        marginBottom: 15,
-        textAlign: "center",
-      },
-      datePickerButton: {
-        flexDirection: "row",
-        alignItems: "center",
-      },
-      dateLabel: {
-        fontSize: 16,
-        fontWeight: "bold",
-        marginTop: 10,
-        marginBottom: 5,
-      },
-      dateScroll: {
-        maxHeight: 100,
-        marginBottom: 10,
-      },
-      dateButtonContainer: {
-        flexDirection: "row",
-        paddingVertical: 10,
-      },
       dateButton: {
         paddingHorizontal: 15,
         paddingVertical: 10,
@@ -268,6 +153,12 @@ export const createDayButtons = ({ tempDate, setTempDate, today, styles }) => {
       disabledDateButton: {
         backgroundColor: "#f0f0f0",
         opacity: 0.5,
+      },
+      selectedDateText: {
+        fontWeight: "bold",
+      },
+      disabledDateText: {
+        color: "#aaa",
       },
 
   });

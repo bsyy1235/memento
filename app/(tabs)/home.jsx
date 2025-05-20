@@ -8,9 +8,10 @@ import {
 } from "react-native";
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from "expo-router";
-import { handleDateSelect } from "../terms/diaryFunction.jsx";
 import { useCalendarLogic } from "../terms/useCalendarLogic.jsx";
 import { Colors } from "../../constants/Colors";
+import { format } from "date-fns";
+import { getDiaryByDate } from '../../utils/diary';
 
 export default function Calendar() {
   const {
@@ -76,6 +77,29 @@ export default function Calendar() {
         pathname: '/todolist/todo',
         params: { date: formattedDate },
       });
+    }
+  };
+  
+    // 날짜 선택 후 조건 분기
+ const handleDateSelect = async ({}) => {
+    try {
+      const formattedDate = format(today, "yyyy-MM-dd");
+      const res = await getDiaryByDate(formattedDate);
+      if(!res){
+        router.push("/diary");
+        return;
+      }
+      if (res?.day?.emotion) {
+        router.push({ pathname: "/diary/DiaryFinal", params: { date: formattedDate } });
+      } else if (res?.day?.audio_path) {
+        router.push({ pathname: "/diary/audioDiary", params: { date: formattedDate } });
+      } else {
+        router.push({ pathname: "/diary/textDiary", params: { date: formattedDate } });
+      }
+    } catch (e) {
+      console.log(e);
+      router.push("/home");
+
     }
   };
 
@@ -149,9 +173,7 @@ export default function Calendar() {
           </View>
         </TouchableOpacity>
         <TouchableOpacity 
-          onPress={() => {
-            handleDateSelect({ date: formattedToday, router });
-          }}
+          onPress={ handleDateSelect }
         >
           <View
             style={[

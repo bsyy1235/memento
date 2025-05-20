@@ -5,11 +5,10 @@ import { Colors } from "../../../constants/Colors";
 import { useDarkMode } from "../../DarkModeContext.jsx";
 import { getDiaryByDate, updateEmotion, getAudioFile } from '../../../utils/diary';
 import { format } from 'date-fns';
-import {formatDateHeader,createYearButtons, createMonthButtons, createDayButtons, DatePickerModal} from "../../terms/diaryFunction.jsx"
+import {formatDateHeader} from "../../terms/diaryFunction.jsx";
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
-import { SERVER_URL } from "../../../utils/api";
 import { useSoundLogic } from "../../terms/useSoundLogic";
 
 export default function DiaryFinal({ route }) {
@@ -61,14 +60,9 @@ export default function DiaryFinal({ route }) {
     }, [sound]);
 
   const showDatepicker = () => {
-    setTempDate(selectedDate);
-    setShowDateModal(true);
+    router.push("/diary");
   };
-  const handleConfirmDate = () => {
-    setSelectedDate(tempDate);
-    setShowDateModal(false);
-  };
-  const handleCancelDate = () => { setShowDateModal(false); };
+
 
   const [modalVisible, setModalVisible] = useState(false);
   const emotions = ['기쁨', '슬픔', '화남', '지침', '중립'];
@@ -254,23 +248,7 @@ export default function DiaryFinal({ route }) {
                 />
               </TouchableOpacity>
             )}
-          </View>
-          <DatePickerModal
-            visible={showDateModal}
-            onCancel={handleCancelDate}
-            onConfirm={handleConfirmDate}
-            createYearButtons={() => 
-              createYearButtons({ tempDate, setTempDate, today, styles })}
-            createMonthButtons={() =>
-              createMonthButtons({ tempDate, setTempDate, today, styles })
-            }
-            createDayButtons={() =>
-              createDayButtons({ tempDate, setTempDate, today, styles })
-            }
-            styles={styles}
-            tempDate={tempDate}
-            router={router}
-          />
+          </View>      
             <View
                 style={[
                 styles.diaryDiv,
