@@ -61,8 +61,13 @@ export default function Collect() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity onPress={() => router.push('../home')} style={styles.backButton}>
-        <Ionicons name="chevron-back-outline" size={30} color={'#888888'} />
+      <TouchableOpacity onPress={() => router.push("../home")}>
+        <Ionicons
+          name="chevron-back-outline"
+          style={{ paddingHorizontal: 5 }}
+          size={26}
+          color={"#888888"}
+        />
       </TouchableOpacity>
       <Text style={styles.header}>다이어리 모아보기</Text>
 
@@ -72,66 +77,144 @@ export default function Collect() {
           <Text style={styles.loadingText}>다이어리를 불러오는 중...</Text>
         </View>
       ) : (
-        <ScrollView style={styles.scrollContainer}>
-          {diaries.map(diary => (
-            <View key={diary.id} style={styles.diaryItem}>
-              <Text style={styles.dateText}>{formatDate(diary.date)}</Text>
+      <ScrollView style={styles.scrollContainer}>
+        {diaries.map((diary) => (
+          <View key={diary.id} style={styles.diaryItem}>
+            <Text style={styles.dateText}>{diary.date}</Text>
 
-              <View style={styles.diaryContent}>
-                <Text numberOfLines={3} style={styles.contentText}>
-                  {diary.content || '내용이 없습니다.'}
-                </Text>
+            <View
+              style={[
+                styles.diaryContent,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(255, 255, 255, 0.5)"
+                    : "rgba(255,230,213, 0.5)",
+                },
+              ]}
+            >
+              {/* 다이어리 내용 (최대 5줄) */}
+              <Text numberOfLines={5} style={styles.contentText}>
+                {diary.content}
+              </Text>
 
-                {diary.emotion ? (
-                  <View style={[
-                    styles.emotionContainer,
-                    { backgroundColor: emotionColors[diary.emotion] || '#EEE' }
-                  ]}>
-                   <Text style={styles.emotionText}>{diary.emotion}</Text>
-                  </View>
-                ) : null}
-
-                <View style={styles.buttonsContainer}>
-                  {diary.hasAudio && (
-                    <TouchableOpacity style={styles.audioButton}>
-                      <Image
-                        style={styles.audioIcon}
-                        source={require("../../assets/images/icon_voice_mine.png")}
-                      />
-                    </TouchableOpacity>
-                  )}
+              {/* 버튼 컨테이너 */}
+              <View style={styles.buttonsContainer}>
+                {/* 음성 버튼 (음성이 있는 경우에만 표시) */}
+                {diary.hasAudio && (
                   <TouchableOpacity
-                    style={styles.viewMoreButton}
-                    onPress={() => handleViewMore(diary.date, diary.emotion, diary.audio_path)}
+                    style={styles.audioButton}
+                    onPress={() => handlePlayAudio(diary.id)}
                   >
-                    <Text style={styles.viewMoreButtonText}>더보기</Text>
+                    <Image
+                      style={styles.audioIcon}
+                      source={require("../../assets/images/icon_voice_mine.png")}
+                    />
                   </TouchableOpacity>
-                </View>
+                )}
+
+                {/* 더보기 버튼 */}
+                <TouchableOpacity
+                  style={styles.viewMoreButton}
+                  onPress={() => handleViewMore(diary.date, diary.emotion, diary.audio_path)}
+                >
+                  <Text style={styles.viewMoreButtonText}>더보기</Text>
+                </TouchableOpacity>
               </View>
             </View>
-          ))}
-        </ScrollView>
+          </View>
+        ))}
+      </ScrollView>
       )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, marginTop: 10, width: '100%', padding: 20 },
-  backButton: { marginBottom: 10 },
-  header: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
-  scrollContainer: { paddingLeft: 15, paddingRight: 15, width: '100%', marginBottom: 15 },
-  diaryItem: { marginBottom: 20 },
-  dateText: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, color: '#333' },
-  diaryContent: { backgroundColor: '#FFF8F3', borderRadius: 12, padding: 16, minHeight: 120, position: 'relative' },
-  contentText: { fontSize: 14, color: '#4d4a49', lineHeight: 20, marginBottom: 40 },
-  emotionContainer: { position: 'absolute', top: 12, right: 12, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4 },
-  emotionText: { fontSize: 12, color: '#4d4a49' },
-  buttonsContainer: { position: 'absolute', bottom: 5, right: 7, flexDirection: 'column', alignItems: 'flex-end' },
-  audioButton: { marginBottom: 2, width: 20, height: 20, right: 7, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
-  audioIcon: { width: 20, height: 20, resizeMode: 'contain' },
-  viewMoreButton: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  viewMoreButtonText: { fontSize: 12, color: '#4d4a49' },
+  container: {
+    justifyContent: "center",
+    width: "100%",
+    padding: 20,
+  },
+  header: {
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    fontSize: 18,
+    marginBottom: 10,
+    alignSelf: "flex-start",
+  },
+  scrollContainer: {
+    paddingHorizontal: 15,
+    width: "100%",
+    marginBottom: 15,
+  },
+  diaryItem: {
+    marginBottom: 20,
+    width: "100%",
+  },
+  dateText: {
+    fontSize: 16,
+    marginBottom: 8,
+    color: "#333",
+  },
+  diaryContent: {
+    backgroundColor: "#FFF8F3",
+    borderRadius: 10,
+    padding: 16,
+    minHeight: 120,
+    position: "relative",
+    borderWidth: 0.5,
+    borderColor: "rgba(158, 150, 150, .5)",
+  },
+  diaryDiv: {
+    // backgroundColor: Colors.subPrimary,
+    borderRadius: 10,
+    // minHeight: "100%", // 최소 높이 지정
+    flex: 1, // 부모 ScrollView의 공간을 모두 차지하도록 flex: 1 추가
+    padding: 10,
+    borderWidth: 0.5,
+    borderColor: "rgba(158, 150, 150, .5)",
+  },
+  contentText: {
+    fontSize: 14,
+    color: "#4d4a49",
+    lineHeight: 20,
+    marginBottom: 40, // 버튼을 위한 공간 확보
+  },
+  buttonsContainer: {
+    position: "absolute",
+    bottom: 5,
+    right: 7,
+    flexDirection: "column",
+    alignItems: "flex-end",
+  },
+  audioButton: {
+    marginBottom: 2,
+    width: 20,
+    height: 20,
+    right: 7,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  audioIcon: {
+    width: 20,
+    height: 20,
+    resizeMode: "contain",
+  },
+  audioButtonText: {
+    fontSize: 16,
+  },
+  viewMoreButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  viewMoreButtonText: {
+    fontSize: 12,
+    color: "#4d4a49",
+  },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 10, fontSize: 16, color: '#666' }
 });

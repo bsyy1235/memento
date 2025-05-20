@@ -1,16 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 
 import { Colors } from "../../constants/Colors";
 import { useDarkMode } from "../DarkModeContext";
+
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { registerUser, login, setAccessToken } from "../../utils/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const CustomCheckbox = ({ checked, onToggle }) => (
   <TouchableOpacity
@@ -46,20 +50,63 @@ export default function TOS() {
   const { isDarkMode } = useDarkMode();
 
   const router = useRouter();
+
+  const params = useLocalSearchParams();
+
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeIdentifier, setAgreeIdentifier] = useState(false);
+  const [agreeIdentifier2, setAgreeIdentifier2] = useState(false);
+
+  // ✅ 전달받은 회원 정보
+  const email = params.email ?? "";
+  const password = params.password ?? "";
+  const nickname = params.nickname ?? "";
+  const gender = params.gender === "female" ? "female" : "male";
+  const age_group = params.age_group ?? "";
+
+  // ✅ 파라미터 누락 방지
+  useEffect(() => {
+    if (!email || !password || !nickname || !gender || !age_group) {
+      Alert.alert("잘못된 접근", "이전 화면에서 회원정보를 다시 입력해주세요.");
+      router.replace("./SignUp");
+    }
+  }, []);
 
   const Back = () => {
     router.push("./SignUp");
   };
-  const Agree = () => {
-    if (agreePrivacy && agreeIdentifier) {
-      alert("회원가입 완료!");
+
+  // const Agree = () => {
+  //   if (agreePrivacy && agreeIdentifier && agreeIdentifier2) {
+  //     alert("회원가입 완료!");
+  //     router.push("../home");
+  //   } else {
+  //     alert("모든 약관에 동의해주세요.");
+  //   }
+  // };
+
+  const Agree = async () => {
+    if (!(agreePrivacy && agreeIdentifier && agreeIdentifier2)) {
+      Alert.alert("약관 동의", "모든 약관에 동의해주세요.");
+      return;
+    }
+
+    try {
+      // ✅ 실제 회원가입 실행
+      await registerUser({ email, password, nickname, gender, age_group });
+
+      // ✅ 로그인 및 토큰 저장
+      const res = await login(email, password);
+      await AsyncStorage.setItem("access_token", res.access_token);
+      setAccessToken(res.access_token);
+
+      Alert.alert("회원가입 완료", "환영합니다!");
       router.push("../home");
-    } else {
-      alert("모든 약관에 동의해주세요.");
+    } catch (err) {
+      Alert.alert("회원가입 실패", err?.message ?? "오류가 발생했습니다.");
     }
   };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={Back}>
@@ -356,8 +403,8 @@ export default function TOS() {
             </ScrollView>
             <View style={styles.checkBoxContainer}>
               <CustomCheckbox
-                checked={agreePrivacy}
-                onToggle={() => setAgreePrivacy(!agreePrivacy)}
+                checked={agreeIdentifier}
+                onToggle={() => setAgreeIdentifier(!agreeIdentifier)}
               />
               <Text style={{ marginRight: 6 }}>약관 동의</Text>
             </View>
@@ -577,8 +624,8 @@ export default function TOS() {
             </ScrollView>
             <View style={styles.checkBoxContainer}>
               <CustomCheckbox
-                checked={agreeIdentifier}
-                onToggle={() => setAgreeIdentifier(!agreeIdentifier)}
+                checked={agreeIdentifier2}
+                onToggle={() => setAgreeIdentifier2(!agreeIdentifier2)}
               />
               <Text style={{ marginRight: 6 }}>약관 동의</Text>
             </View>

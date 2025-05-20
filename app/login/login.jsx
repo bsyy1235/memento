@@ -34,14 +34,19 @@ export default function Login() {
       Alert.alert("로그인 성공!");
       console.log("✅ 로그인 성공:", res.access_token);
 
+      // 로그인 직후 토근 저장을 기다림
       // ✅ 토큰 저장
       await AsyncStorage.setItem("access_token", res.access_token);
-      setAccessToken(res.access_token);
+      const testToken = await AsyncStorage.getItem("access_token");
 
+      setAccessToken(res.access_token);
       router.replace("/home");
     } catch (err) {
       console.log("❌ 로그인 전체 실패:", err);
-      Alert.alert("로그인 실패", "문제가 발생했습니다.");
+      Alert.alert(
+        "로그인 실패",
+        "이메일이 존재하지 않거나, 비밀번호가 올바르지 않습니다."
+      );
     }
   };
   const SignUp = () => {
