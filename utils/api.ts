@@ -157,7 +157,41 @@ export async function verifyEmailCode(email: string, code: string) {
   }
 }
 
-// ✅ 회원정보 수정 (닉네임, 성별, 나이, 이메일)
+// ✅ 비밀번호 재설정 (로그인 불필요)
+export async function resetPasswordByEmail(email: string, newPassword: string) {
+  try {
+    const res = await api.post("/api/auth/reset-password", {
+      email,
+      new_password: newPassword,
+    });
+    return res.data;
+  } catch (err: any) {
+    const status = err.response?.status;
+
+    // 👉 이메일이 존재하지 않으면
+    if (status === 404) {
+      throw new Error("해당 이메일은 가입되어있지 않습니다.");
+    }
+
+    // 다른 에러 처리
+    throw new Error(err.response?.data?.detail || "비밀번호 재설정 실패");
+  }
+}
+
+// ✅ 회원정보 수정 [반영] (닉네임, 나이)
+export async function updateUserPartial(user: {
+  nickname: string;
+  age_group: "10대" | "20대" | "30대" | "40대" | "50대" | "60대 이상";
+}) {
+  try {
+    const res = await api.patch("/api/user/me", user);
+    return res.data;
+  } catch (err: any) {
+    throw new Error(err.response?.data?.detail || "회원정보 수정 실패");
+  }
+}
+
+// ✅ 회원정보 수정 [X반영X] (닉네임, 성별, 나이, 이메일)
 export async function updateUser(user: {
   email: string;
   nickname: string;
@@ -206,10 +240,16 @@ export async function updatePassword(
 
     return response.data;
   } catch (error: any) {
-    if (error.response?.data?.detail) {
-      console.log("❌ 서버에서 온 에러 메시지:", error.message);
-      throw new Error(error.response.data.detail);
+    const detail = error.response?.data?.detail;
+    if (typeof detail === "string") {
+      console.log("❌ 서버에서 온 에러 메시지:", detail);
+      throw new Error(detail);
     }
+    if (Array.isArray(detail) && detail[0]?.msg) {
+      console.log("❌ 서버 Validation 에러 메시지:", detail[0].msg);
+      throw new Error(detail[0].msg);
+    }
+    console.log("❌ 서버에서 온 알 수 없는 에러:", error.message);
     throw new Error("비밀번호 변경에 실패했습니다.");
   }
 }
@@ -307,5 +347,15 @@ export async function deleteTodoById(todo_id: string) {
       error.response?.data || error.message
     );
     throw error;
+  }
+}
+
+// ✅ 유저 정보 불러오기기
+export async function getCurrentUser() {
+  try {
+    const res = await api.get("/api/user/me");
+    return res.data; // nickname 포함된 객체
+  } catch (err: any) {
+    throw new Error("사용자 정보를 불러오지 못했습니다.");
   }
 }

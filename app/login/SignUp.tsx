@@ -10,10 +10,6 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { registerUser } from "../../utils/api";
-
-import { login, setAccessToken } from "../../utils/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { sendEmailVerificationCode, verifyEmailCode } from "../../utils/api"; // 위치 맞춰서 import
 
@@ -32,6 +28,8 @@ export default function SignUp() {
   const [passwordFormatError, setPasswordFormatError] = useState("");
 
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [isVerified, setIsVerified] = useState(false); // ✅ 여기에 있어야 함
 
   const { isDarkMode } = useDarkMode();
 
@@ -74,8 +72,19 @@ export default function SignUp() {
 
     // 필수 필드 유효성 검사 생략... (그대로 유지)
 
+    if (!isVerified) {
+      Alert.alert("알림", "이메일 인증을 완료해주세요.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       Alert.alert("알림", "비밀번호를 다시 확인해주세요.");
+      return;
+    }
+
+    // ✅ 여기에서 비밀번호 형식 검사 결과 확인
+    if (passwordLengthError || passwordFormatError) {
+      Alert.alert("알림", "비밀번호 형식을 확인해주세요.");
       return;
     }
 
@@ -154,19 +163,18 @@ export default function SignUp() {
     }
 
     try {
-      const res = await verifyEmailCode(email.trim(), verificationCode.trim());
-      // res변수 안 써도 어차피 verifyEmailCode는 진행되어서, 통과되는 것.
-
-      // const success_msg =
-      //   typeof res === "string"
-      //     ? res
-      //     : typeof res?.message === "string"
-      //     ? res.message
-      //     : JSON.stringify(res);
-      Alert.alert("인증 성공", "이메일 인증 성공"); // ex: "인증 성공"
-      // 필요 시 상태 저장: setIsVerified(true);
+      await verifyEmailCode(email.trim(), verificationCode.trim());
+      setIsVerified(true); // 인증 성공 상태 저장
+      Alert.alert("인증 성공", "이메일 인증 성공");
     } catch (err: any) {
-      Alert.alert("인증 실패", "인증에 실패했습니다."); //err.message
+      setIsVerified(false);
+      const msg = err.message || "";
+      // 특정 에러 메시지를 감지해 한국어로 번역
+      if (msg.includes("Invalid verification code")) {
+        Alert.alert("인증 실패", "인증번호가 다릅니다.");
+      } else {
+        Alert.alert("인증 실패", "인증에 실패했습니다.");
+      }
     }
   };
 
@@ -249,14 +257,16 @@ export default function SignUp() {
             />
             <TouchableOpacity onPress={sendVerificationCode}>
               <View
-                style={{
-                  borderRadius: 100,
-                  paddingVertical: 6, // 글자 여백 확보용 (1.5는 너무 작아서 실제로는 이 정도 필요)
-                  paddingHorizontal: 12,
-                  backgroundColor: Colors.subPrimary,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+                style={[
+                  {
+                    borderRadius: 100,
+                    paddingVertical: 6, // 글자 여백 확보용 (1.5는 너무 작아서 실제로는 이 정도 필요)
+                    paddingHorizontal: 12,
+                    backgroundColor: isDarkMode ? "#e0e0e0" : Colors.subPrimary,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  },
+                ]}
               >
                 <Text style={{ fontSize: 12 }}>인증번호 발송</Text>
               </View>
@@ -277,18 +287,23 @@ export default function SignUp() {
               style={styles.divText}
               placeholder="인증번호 *"
               value={verificationCode}
-              onChangeText={setVerificationCode}
+              onChangeText={(text) => {
+                setVerificationCode(text);
+                setIsVerified(false); // ✅ 인증번호가 바뀌면 인증 상태 무효화
+              }}
             />
             <TouchableOpacity onPress={checkVerificationCode}>
               <View
-                style={{
-                  borderRadius: 100,
-                  paddingVertical: 6, // 글자 여백 확보용 (1.5는 너무 작아서 실제로는 이 정도 필요)
-                  paddingHorizontal: 12,
-                  backgroundColor: Colors.subPrimary,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+                style={[
+                  {
+                    borderRadius: 100,
+                    paddingVertical: 6, // 글자 여백 확보용 (1.5는 너무 작아서 실제로는 이 정도 필요)
+                    paddingHorizontal: 12,
+                    backgroundColor: isDarkMode ? "#e0e0e0" : Colors.subPrimary,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  },
+                ]}
               >
                 <Text style={{ fontSize: 12 }}>인증 확인</Text>
               </View>

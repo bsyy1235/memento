@@ -12,6 +12,9 @@ import {
   FlatList,
 } from "react-native";
 import CheckBox from "expo-checkbox";
+
+import { getCurrentUser } from "../../utils/api";
+
 // from expo.
 import { Colors } from "../../constants/Colors";
 // import DraggableFlatList from "react-native-draggable-flatlist";
@@ -38,6 +41,7 @@ export default function todo() {
   const [editingKey, setEditingKey] = useState(null); // 어떤 todo를 수정중인지
   const [editingText, setEditingText] = useState(""); // 수정 중인 텍스트
   const [isEditing, setIsEditing] = useState(false);
+  const [nickname, setNickname] = useState("");
 
   const { isDarkMode } = useDarkMode();
 
@@ -55,6 +59,14 @@ export default function todo() {
         }
 
         setAccessToken(token); // ✅ 헤더 설정
+
+        try {
+          const user = await getCurrentUser();
+          setNickname(user.nickname); // ✅ 닉네임 설정
+        } catch (e) {
+          console.warn("닉네임 로드 실패:", e.message);
+        }
+
         const today = new Date().toISOString().split("T")[0];
 
         try {
@@ -124,7 +136,9 @@ export default function todo() {
       <View>
         <TouchableOpacity style={styles.header}>
           <Text style={{ fontSize: 30, fontFamily: "roboto" }}>할 일</Text>
-          <Text style={{ fontSize: 18, fontFamily: "roboto" }}>닉네임</Text>
+          <Text style={{ fontSize: 18, fontFamily: "roboto" }}>
+            {nickname || "닉네임"}
+          </Text>
         </TouchableOpacity>
       </View>
       <View style={{ marginVertical: 20 }}>
