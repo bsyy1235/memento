@@ -1,7 +1,7 @@
 // utils/diaryFunction.jsx
 import React from "react";
 import { TouchableOpacity,StyleSheet, Text} from "react-native";
-import { Colors } from "../../constants/Colors";
+import { Colors } from "../constants/Colors";
 
 
 // 날짜 형식 변환 함수 (월 날짜 형식으로)

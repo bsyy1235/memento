@@ -2,8 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
-import { getDiaryHome } from '../../utils/diary';
-import { useDarkMode } from '../DarkModeContext';
+import { getDiaryHome } from '../utils/diary';
+import { useDarkMode } from '../app/DarkModeContext';
 
 export const useCalendarLogic = () => {
   const { isDarkMode } = useDarkMode();

@@ -1,8 +1,8 @@
 //DatePickerModal.jsx
 import React, {useEffect, useRef } from "react";
 import { TouchableOpacity,StyleSheet, Text, View , Modal, ScrollView} from "react-native";
-import { Colors } from "../../constants/Colors";
-import { getDiaryByDate } from "../../utils/diary";
+import { Colors } from "../constants/Colors";
+import { getDiaryByDate } from "../utils/diary";
 import { format } from "date-fns";
 
 export const handleDateSelect = async ({ date, router}) => {
