@@ -9,11 +9,12 @@ import {
   Alert,
   Image,
   PixelRatio,
+  FlatList,
 } from "react-native";
 import CheckBox from "expo-checkbox";
 // from expo.
 import { Colors } from "../../constants/Colors";
-import DraggableFlatList from "react-native-draggable-flatlist";
+// import DraggableFlatList from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler"; // ScrollView를 포함함.
 import { useDarkMode } from "../DarkModeContext";
 
@@ -157,131 +158,120 @@ export default function todo() {
         style={{ flex: 1 }}
       /> */}
 
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <DraggableFlatList
-          data={todos}
-          keyExtractor={(item) => item.id}
-          onDragEnd={async ({ data }) => {
-            setTodos(data);
-            // await saveTodos(data); // 드래그 후 순서 저장 추가
-          }}
-          renderItem={({ item, drag, isActive }) => (
-            <TouchableOpacity
-              onLongPress={drag} // 길게 누르면 드래그 시작
-              disabled={isActive} // 드래그 중에는 비활성화
+      <FlatList
+        data={todos}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity>
+            <View
+              style={[
+                styles.toDo,
+                { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+              ]}
+              key={item.id}
             >
-              <View
-                style={[
-                  styles.toDo,
-                  { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
-                ]}
-                key={item.id}
-              >
-                {/* 👉 아이템 하나를 크게 두 덩어리로 나눈다 */}
-                <View style={styles.itemContainer}>
-                  {/* 왼쪽: 체크박스 + 텍스트 */}
-                  <View style={styles.leftContent}>
-                    <CheckBox
-                      tintColor={Colors.subPrimary} // 체크되지 않은 상태의 테두리 색상
-                      onCheckColor={Colors.subPrimary} // 체크 표시 색상
-                      onTintColor={Colors.subPrimary} // 체크된 색상
-                      style={styles.checkbox}
-                      value={item.completed || false}
-                      onValueChange={() => markDone(item.id)}
-                      //toggleCheck
+              {/* 👉 아이템 하나를 크게 두 덩어리로 나눈다 */}
+              <View style={styles.itemContainer}>
+                {/* 왼쪽: 체크박스 + 텍스트 */}
+                <View style={styles.leftContent}>
+                  <CheckBox
+                    tintColor={Colors.subPrimary} // 체크되지 않은 상태의 테두리 색상
+                    onCheckColor={Colors.subPrimary} // 체크 표시 색상
+                    onTintColor={Colors.subPrimary} // 체크된 색상
+                    style={styles.checkbox}
+                    value={item.completed || false}
+                    onValueChange={() => markDone(item.id)}
+                    //toggleCheck
+                  />
+
+                  {editingKey === item.id ? (
+                    <TextInput
+                      style={[
+                        styles.toDoText,
+                        // { borderBottomWidth: 1, borderColor: "gray" },
+                        { paddingVertical: 0 },
+                      ]}
+                      value={editingText}
+                      onChangeText={setEditingText}
+                      onSubmitEditing={async () => {
+                        if (editingText.trim() === "") {
+                          Alert.alert("알림", "내용을 입력하세요.");
+                          return;
+                        }
+
+                        try {
+                          const updated = await updateTodo(
+                            item.id,
+                            editingText
+                          );
+                          setTodos(
+                            todos.map((t) => (t.id === item.id ? updated : t))
+                          );
+                          setEditingKey(null);
+                          setEditingText("");
+                        } catch (err) {
+                          Alert.alert("에러", "할 일 수정 실패");
+                          console.error(
+                            "🚨 수정 실패 상세:",
+                            err.response?.data || err.message
+                          );
+                        }
+                      }}
+                      returnKeyType="done"
+                      autoFocus
                     />
-
-                    {editingKey === item.id ? (
-                      <TextInput
-                        style={[
-                          styles.toDoText,
-                          // { borderBottomWidth: 1, borderColor: "gray" },
-                          { paddingVertical: 0 },
-                        ]}
-                        value={editingText}
-                        onChangeText={setEditingText}
-                        onSubmitEditing={async () => {
-                          if (editingText.trim() === "") {
-                            Alert.alert("알림", "내용을 입력하세요.");
-                            return;
-                          }
-
-                          try {
-                            const updated = await updateTodo(
-                              item.id,
-                              editingText
-                            );
-                            setTodos(
-                              todos.map((t) => (t.id === item.id ? updated : t))
-                            );
-                            setEditingKey(null);
-                            setEditingText("");
-                          } catch (err) {
-                            Alert.alert("에러", "할 일 수정 실패");
-                            console.error(
-                              "🚨 수정 실패 상세:",
-                              err.response?.data || err.message
-                            );
-                          }
+                  ) : (
+                    <Text
+                      style={[
+                        styles.toDoText,
+                        item.completed && {
+                          textDecorationLine: "line-through",
+                          color: "grey",
+                        },
+                      ]}
+                    >
+                      {item.text}
+                    </Text>
+                  )}
+                </View>
+                {/* 오른쪽: 수정/삭제 버튼 */}
+                <View style={styles.buttons}>
+                  {editingKey !== item.id && ( // 수정 중이 아닐 때만 보여주기
+                    <>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setEditingKey(item.id); // 어떤 todo를 수정할지 기억
+                          setEditingText(item.text); // 기존 텍스트를 편집할 수 있게
                         }}
-                        returnKeyType="done"
-                        autoFocus
-                      />
-                    ) : (
-                      <Text
-                        style={[
-                          styles.toDoText,
-                          item.completed && {
-                            textDecorationLine: "line-through",
-                            color: "grey",
-                          },
-                        ]}
                       >
-                        {item.text}
-                      </Text>
-                    )}
-                  </View>
-                  {/* 오른쪽: 수정/삭제 버튼 */}
-                  <View style={styles.buttons}>
-                    {editingKey !== item.id && ( // 수정 중이 아닐 때만 보여주기
-                      <>
-                        <TouchableOpacity
-                          onPress={() => {
-                            setEditingKey(item.id); // 어떤 todo를 수정할지 기억
-                            setEditingText(item.text); // 기존 텍스트를 편집할 수 있게
+                        <Image
+                          source={require("../../assets/images/icon-pencil.png")}
+                          style={{
+                            width: PixelRatio.getPixelSizeForLayoutSize(size),
+                            height: PixelRatio.getPixelSizeForLayoutSize(size),
                           }}
-                        >
-                          <Image
-                            source={require("../../assets/images/icon-pencil.png")}
-                            style={{
-                              width: PixelRatio.getPixelSizeForLayoutSize(size),
-                              height:
-                                PixelRatio.getPixelSizeForLayoutSize(size),
-                            }}
-                          />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => deleteTodo(item.id)}
-                          style={styles.button}
-                        >
-                          <Image
-                            source={require("../../assets/images/icons-trashcan.png")}
-                            style={{
-                              width: PixelRatio.getPixelSizeForLayoutSize(size),
-                              height:
-                                PixelRatio.getPixelSizeForLayoutSize(size),
-                            }}
-                          />
-                        </TouchableOpacity>
-                      </>
-                    )}
-                  </View>
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => deleteTodo(item.id)}
+                        style={styles.button}
+                      >
+                        <Image
+                          source={require("../../assets/images/icons-trashcan.png")}
+                          style={{
+                            width: PixelRatio.getPixelSizeForLayoutSize(size),
+                            height: PixelRatio.getPixelSizeForLayoutSize(size),
+                          }}
+                        />
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </View>
               </View>
-            </TouchableOpacity>
-          )}
-        />
-      </GestureHandlerRootView>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
 
       <View>
         <TextInput

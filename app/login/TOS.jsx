@@ -67,7 +67,7 @@ export default function TOS() {
   // ✅ 파라미터 누락 방지
   useEffect(() => {
     if (!email || !password || !nickname || !gender || !age_group) {
-      Alert.alert("잘못된 접근", "이전 화면에서 회원정보를 다시 입력해주세요.");
+      Alert.alert("잘못된 접근", "회원정보를 빠짐없이 입력해주세요.");
       router.replace("./SignUp");
     }
   }, []);

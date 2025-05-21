@@ -15,6 +15,8 @@ import { Colors } from "./../../constants/Colors.ts";
 import { useRouter } from "expo-router";
 import { useDarkMode } from "../DarkModeContext";
 
+import { sendEmailVerificationCode, verifyEmailCode } from "../../utils/api"; // 위치 맞춰서 import
+
 import { updatePassword } from "../../utils/api.ts"; // 경로 맞게 조정
 
 export default function FindPW() {
@@ -26,35 +28,54 @@ export default function FindPW() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  const findEmail = () => {
-    Alert.alert("이메일 찾기", "이메일 찾기를 진행하시겠습니까?", [
-      {
-        text: "네",
-      },
-      {
-        text: "아니오",
-      },
-    ]);
-  };
-
-  const sendMessage = () => {
-    Alert.alert("인증번호", "인증번호를 요청하시겠습니까까?", [
-      {
-        text: "네",
-      },
-      {
-        text: "아니오",
-      },
-    ]);
-  };
-
-  const resetPassword = async () => {
-    if (!agreeIdentifier) {
-      Alert.alert("알림", "약관에 동의해주세요.");
+  const sendVerificationCode = async () => {
+    if (!email.trim()) {
+      Alert.alert("알림", "이메일을 입력해주세요.");
       return;
     }
 
-    // 여기서 에러!
+    try {
+      const res = await sendEmailVerificationCode(email.trim());
+      // const send_code =
+      //   typeof res === "string"
+      //     ? res
+      //     : typeof res?.message === "string"
+      //     ? res.message
+      //     : JSON.stringify(res);
+
+      Alert.alert(
+        "인증번호 발송",
+        `인증번호가 발송되었습니다.${"\n"}인증번호를 입력해주세요.`
+      ); //send_code
+    } catch (err) {
+      Alert.alert("실패", "인증번호 발송에 실패했습니다."); //err.message
+    }
+  };
+
+  const checkVerificationCode = async () => {
+    if (!verificationCode.trim()) {
+      Alert.alert("알림", "인증번호를 다시 확인해주세요.");
+      return;
+    }
+
+    try {
+      const res = await verifyEmailCode(email.trim(), verificationCode.trim());
+      // const success_msg =
+      //   typeof res === "string"
+      //     ? res
+      //     : typeof res?.message === "string"
+      //     ? res.message
+      //     : JSON.stringify(res);
+      Alert.alert("인증 성공", "이메일 인증 성공"); // ex: "인증 성공"
+      // 필요 시 상태 저장: setIsVerified(true);
+    } catch (err) {
+      // Alert.alert("인증 실패", "인증에 실패했습니다."); //err.message
+      console.error("❌ 인증 실패:", err.response?.data || err.message);
+      Alert.alert("인증 실패", err.message || "인증에 실패했습니다.");
+    }
+  };
+
+  const resetPassword = async () => {
     try {
       await updatePassword(currentPassword, newPassword);
       Alert.alert("성공", "비밀번호가 변경되었습니다.");
@@ -62,36 +83,6 @@ export default function FindPW() {
       Alert.alert("오류", err.message || "비밀번호 변경에 실패했습니다.");
     }
   };
-
-  const CustomCheckbox = ({ checked, onToggle }) => (
-    <TouchableOpacity
-      onPress={onToggle}
-      style={{
-        width: 20,
-        height: 20,
-        borderRadius: 3,
-        backgroundColor: isDarkMode ? "#e9e9e9" : "#ffcfae",
-        marginRight: 8,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      {checked && (
-        <View>
-          <Text
-            style={{
-              color: "grey",
-              fontWeight: "bold",
-              fontSize: 14,
-              marginTop: -4,
-            }}
-          >
-            ✓
-          </Text>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
 
   const router = useRouter();
   const Back = () => {
@@ -114,9 +105,6 @@ export default function FindPW() {
         <View>
           <View style={styles.subheader}>
             <Text>이메일</Text>
-            <TouchableOpacity onPress={() => findEmail()}>
-              <Text>이메일 찾기</Text>
-            </TouchableOpacity>
           </View>
           <View
             style={[
@@ -131,14 +119,25 @@ export default function FindPW() {
               keyboardType="email-address"
               style={styles.divText}
             />
+            <TouchableOpacity onPress={sendVerificationCode}>
+              <View
+                style={{
+                  borderRadius: 100,
+                  paddingVertical: 6, // 글자 여백 확보용 (1.5는 너무 작아서 실제로는 이 정도 필요)
+                  paddingHorizontal: 12,
+                  backgroundColor: Colors.subPrimary,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ fontSize: 12 }}>인증번호 발송</Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
         <View>
           <View style={styles.subheader}>
             <Text>인증번호</Text>
-            <TouchableOpacity onPress={() => sendMessage()}>
-              <Text>인증번호 발송</Text>
-            </TouchableOpacity>
           </View>
           <View
             style={[
@@ -151,8 +150,21 @@ export default function FindPW() {
               placeholder="인증번호 *"
               value={verificationCode}
               onChangeText={setVerificationCode}
-              keyboardType="number-pad"
             />
+            <TouchableOpacity onPress={checkVerificationCode}>
+              <View
+                style={{
+                  borderRadius: 100,
+                  paddingVertical: 6, // 글자 여백 확보용 (1.5는 너무 작아서 실제로는 이 정도 필요)
+                  paddingHorizontal: 12,
+                  backgroundColor: Colors.subPrimary,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ fontSize: 12 }}>인증 확인</Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
         <View>
@@ -176,7 +188,7 @@ export default function FindPW() {
         </View>
         <View>
           <View style={styles.subheader}>
-            <Text>비밀번호 확인</Text>
+            <Text>새 비밀번호</Text>
           </View>
           <View
             style={[

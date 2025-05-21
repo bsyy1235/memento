@@ -136,7 +136,7 @@ export async function sendEmailVerificationCode(email: string) {
     const res = await api.post(
       `/api/user/send-code?email=${encodeURIComponent(email)}`
     );
-    return res.data; // ex: "인증번호가 전송되었습니다"
+    return res.data.message || res.data; // ex: "인증번호가 전송되었습니다"
   } catch (err: any) {
     throw new Error(err.response?.data?.detail || "인증번호 전송 실패");
   }
@@ -206,6 +206,7 @@ export async function updatePassword(
     return response.data;
   } catch (error: any) {
     if (error.response?.data?.detail) {
+      console.log("❌ 서버에서 온 에러 메시지:", error.message);
       throw new Error(error.response.data.detail);
     }
     throw new Error("비밀번호 변경에 실패했습니다.");

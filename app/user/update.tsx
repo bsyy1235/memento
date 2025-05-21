@@ -18,14 +18,70 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Colors } from "../../constants/Colors";
 import { useDarkMode } from "../DarkModeContext";
 
+import {
+  sendEmailVerificationCode,
+  verifyEmailCode,
+  updatePassword,
+} from "../../utils/api"; // 위치 맞춰서 import
+
 export default function SignUp() {
   const router = useRouter();
   const [nickname, setNickname] = useState("");
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
   const [email, setEmail] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
   const { isDarkMode } = useDarkMode();
+
+  const [verificationCode, setVerificationCode] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+
+  const sendVerificationCode = async () => {
+    if (!email.trim()) {
+      Alert.alert("알림", "이메일을 입력해주세요.");
+      return;
+    }
+
+    try {
+      const res = await sendEmailVerificationCode(email.trim());
+      // const send_code =
+      //   typeof res === "string"
+      //     ? res
+      //     : typeof res?.message === "string"
+      //     ? res.message
+      //     : JSON.stringify(res);
+
+      Alert.alert(
+        "인증번호 발송",
+        `인증번호가 발송되었습니다.${"\n"}인증번호를 입력해주세요.`
+      ); //send_code
+    } catch (err: any) {
+      Alert.alert("실패", "인증번호 발송에 실패했습니다."); //err.message
+    }
+  };
+
+  const checkVerificationCode = async () => {
+    if (!verificationCode.trim()) {
+      Alert.alert("알림", "인증번호를 다시 확인해주세요.");
+      return;
+    }
+
+    try {
+      const res = await verifyEmailCode(email.trim(), verificationCode.trim());
+      // const success_msg =
+      //   typeof res === "string"
+      //     ? res
+      //     : typeof res?.message === "string"
+      //     ? res.message
+      //     : JSON.stringify(res);
+      Alert.alert("인증 성공", "이메일 인증 성공"); // ex: "인증 성공"
+      // 필요 시 상태 저장: setIsVerified(true);
+    } catch (err: any) {
+      // Alert.alert("인증 실패", "인증에 실패했습니다."); //err.message
+      console.error("❌ 인증 실패:", err.response?.data || err.message);
+      Alert.alert("인증 실패", err.message || "인증에 실패했습니다.");
+    }
+  };
 
   const Back = () => {
     router.push("../(tabs)/setting");
@@ -82,14 +138,6 @@ export default function SignUp() {
     }
   };
 
-  const sendVerificationCode = () => {
-    if (!email.trim()) {
-      Alert.alert("알림", "이메일을 입력해주세요.");
-      return;
-    }
-    Alert.alert("인증번호 발송", "인증번호가 발송되었습니다.");
-  };
-
   return (
     <View style={styles.container}>
       <TouchableOpacity
@@ -104,25 +152,6 @@ export default function SignUp() {
       >
         <View style={styles.header}>
           <Text style={styles.headerText}>회원정보 수정</Text>
-        </View>
-
-        <View>
-          <View style={styles.subheader}>
-            <Text>이메일</Text>
-          </View>
-          <View
-            style={[
-              styles.div,
-              { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
-            ]}
-          >
-            <TextInput
-              style={styles.divText}
-              placeholder="이메일 *"
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
         </View>
 
         <View>
@@ -143,24 +172,7 @@ export default function SignUp() {
             />
           </View>
         </View>
-        <View>
-          <View style={styles.subheader}>
-            <Text>성별</Text>
-          </View>
-          <View
-            style={[
-              styles.div,
-              { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
-            ]}
-          >
-            <TextInput
-              style={styles.divText}
-              placeholder="성별 *"
-              value={gender}
-              onChangeText={setGender}
-            />
-          </View>
-        </View>
+
         <View>
           <View style={styles.subheader}>
             <Text>나이</Text>
@@ -177,6 +189,44 @@ export default function SignUp() {
               value={age}
               onChangeText={setAge}
               keyboardType="numeric"
+            />
+          </View>
+        </View>
+        <View>
+          <View style={styles.subheader}>
+            <Text>기존 비밀번호</Text>
+          </View>
+          <View
+            style={[
+              styles.div,
+              { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+            ]}
+          >
+            <TextInput
+              style={styles.divText}
+              placeholder="기존 비밀번호 *"
+              secureTextEntry={true}
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+            />
+          </View>
+        </View>
+        <View>
+          <View style={styles.subheader}>
+            <Text>새 비밀번호</Text>
+          </View>
+          <View
+            style={[
+              styles.div,
+              { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+            ]}
+          >
+            <TextInput
+              style={styles.divText}
+              placeholder="비밀번호 재설정 *"
+              secureTextEntry={true}
+              value={newPassword}
+              onChangeText={setNewPassword}
             />
           </View>
         </View>

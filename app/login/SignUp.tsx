@@ -69,63 +69,6 @@ export default function SignUp() {
     }
   }
 
-  // const handleSignUp = async () => {
-  //   console.log("🔔 회원가입 버튼 눌림"); //작동 함!
-  //   // 필수 입력 필드 검증
-  //   const requiredFields = [
-  //     { name: "닉네임", value: nickname },
-  //     { name: "성별", value: gender },
-  //     { name: "나이", value: age },
-  //     { name: "이메일", value: email },
-  //     { name: "인증번호", value: verificationCode },
-  //     { name: "비밀번호", value: password },
-  //     { name: "비밀번호 확인", value: confirmPassword },
-  //   ];
-
-  //   // 비어있는 필드 찾기
-  //   const missingFields = requiredFields.filter((field) => !field.value.trim());
-
-  //   // 비어있는 필드가 있는 경우
-  //   if (missingFields.length > 0) {
-  //     const missingFieldNames = missingFields
-  //       .map((field) => field.name)
-  //       .join(", ");
-  //     Alert.alert("알림", `${missingFieldNames}을(를) 입력해주세요.`);
-  //     return;
-  //   }
-
-  //   // 비밀번호 확인 검증
-  //   if (password !== confirmPassword) {
-  //     Alert.alert("알림", "비밀번호를 다시 확인해주세요.");
-  //     return;
-  //   }
-
-  //   // 모든 검증을 통과하면 회원가입 진행
-  //   try {
-  //     await registerUser({
-  //       email,
-  //       password,
-  //       nickname,
-  //       gender: gender === "남자" ? "male" : "female", // 또는 라디오 버튼 등으로 변환 // 라디오로 수정해야 할듯.
-  //       age_group: convertAgeToGroup(age), // FastAPI는 '10대' '20대' 이런 형식을 요구함
-  //     });
-
-  //     // ✅ 자동 로그인 추가
-  //     const res = await login(email, password);
-  //     await AsyncStorage.setItem("access_token", res.access_token);
-  //     setAccessToken(res.access_token);
-
-  //     Alert.alert("약관 동의", "이용약관 동의가 필요합니다.");
-  //     router.push("./TOS"); // TOS 대신 로그인으로 이동
-  //   } catch (error: unknown) {
-  //     if (error instanceof Error) {
-  //       Alert.alert("회원가입 실패", "이미 존재하는 이메일입니다.");
-  //     } else {
-  //       Alert.alert("회원가입 실패", "알 수 없는 오류입니다.");
-  //     }
-  //   }
-  // };
-
   const handleSignUp = async () => {
     console.log("🔔 회원가입 버튼 눌림");
 
@@ -188,25 +131,42 @@ export default function SignUp() {
 
     try {
       const res = await sendEmailVerificationCode(email.trim());
-      // Alert.alert("인증번호 발송", res.message); // ex: "인증번호가 전송되었습니다"
-      Alert.alert("인증번호 발송", "인증번호가 전송되었습니다. 확인해주세요."); // ex: "인증번호가 전송되었습니다"
+      // const send_code =
+      //   typeof res === "string"
+      //     ? res
+      //     : typeof res?.message === "string"
+      //     ? res.message
+      //     : JSON.stringify(res);
+
+      Alert.alert(
+        "인증번호 발송",
+        `인증번호가 발송되었습니다.${"\n"}인증번호를 입력해주세요.`
+      ); //send_code
     } catch (err: any) {
-      Alert.alert("실패", err.message);
+      Alert.alert("실패", "인증번호 발송에 실패했습니다."); //err.message
     }
   };
 
   const checkVerificationCode = async () => {
     if (!verificationCode.trim()) {
-      Alert.alert("알림", "인증번호를 입력해주세요.");
+      Alert.alert("알림", "인증번호를 다시 확인해주세요.");
       return;
     }
 
     try {
       const res = await verifyEmailCode(email.trim(), verificationCode.trim());
-      Alert.alert("성공", res); // ex: "인증 성공"
+      // res변수 안 써도 어차피 verifyEmailCode는 진행되어서, 통과되는 것.
+
+      // const success_msg =
+      //   typeof res === "string"
+      //     ? res
+      //     : typeof res?.message === "string"
+      //     ? res.message
+      //     : JSON.stringify(res);
+      Alert.alert("인증 성공", "이메일 인증 성공"); // ex: "인증 성공"
       // 필요 시 상태 저장: setIsVerified(true);
     } catch (err: any) {
-      Alert.alert("인증 실패", err.message);
+      Alert.alert("인증 실패", "인증에 실패했습니다."); //err.message
     }
   };
 
@@ -287,14 +247,25 @@ export default function SignUp() {
               onChangeText={setEmail}
               keyboardType="email-address"
             />
+            <TouchableOpacity onPress={sendVerificationCode}>
+              <View
+                style={{
+                  borderRadius: 100,
+                  paddingVertical: 6, // 글자 여백 확보용 (1.5는 너무 작아서 실제로는 이 정도 필요)
+                  paddingHorizontal: 12,
+                  backgroundColor: Colors.subPrimary,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ fontSize: 12 }}>인증번호 발송</Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
         <View>
           <View style={[styles.subheader, styles.buttonView]}>
             <Text>인증번호</Text>
-            <TouchableOpacity onPress={sendVerificationCode}>
-              <Text>인증번호 발송</Text>
-            </TouchableOpacity>
           </View>
           <View
             style={[
