@@ -47,10 +47,6 @@ export default function Calendar() {
     }
   };
 
-  // 오늘 날짜 형식화
-  const formattedToday = 
-    `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-
   // 최초 마운트 시 1번 실행
   useEffect(() => {
     initializeCalendar();
@@ -62,23 +58,25 @@ export default function Calendar() {
     }, [])
   );
 
-  // 날짜 선택 처리 함수
   const onDateSelect = (day) => {
-    if (day !== null) {
-      handleDateSelection(day);
-      
-      // 선택된 날짜 형식화
-      const selectedYear = currentDate.getFullYear();
-      const selectedMonth = currentDate.getMonth() + 1;
-      const formattedDate = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      
-      // todo 화면으로로 이동
-      router.push({
-        pathname: '/todolist/todo',
-        params: { date: formattedDate },
-      });
-    }
-  };
+  if (day !== null) {
+    // 현재 표시된 년도와 월을 사용하여 완전한 Date 객체 생성
+    const selectedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    
+    // 캘린더 내부 상태도 업데이트
+    handleDateSelection(day);
+    
+    // 올바른 형식으로 날짜 포맷팅
+    const formattedDate = format(selectedDate, "yyyy-MM-dd");
+    
+    // todo 화면으로 이동
+    router.push({
+      pathname: '/todolist/todo',
+      params: { date: formattedDate },
+    });
+  }
+};
+
   
     // 날짜 선택 후 조건 분기
  const handleDateSelect = async ({}) => {
@@ -160,7 +158,12 @@ export default function Calendar() {
       </View>
 
       <View style={styles.buttonsContainer}>
-        <TouchableOpacity onPress={() => router.push("../todolist/todo")}>
+        <TouchableOpacity onPress={() => {
+          router.push({
+            pathname: "../todolist/todo",
+            params: {date: today}
+          });
+        }}>
           <View
             style={[
               styles.divContainer,

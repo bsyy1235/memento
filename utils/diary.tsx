@@ -17,24 +17,24 @@ interface Day {
   date: string;
   wrote_diary: boolean;
   emotion: string | null;
-  todos: boolean;
+  total_todo: number;
+  completed_todo: number;
 }
 
 // 캘린더 다이어리 조회 함수
 export const getDiaryHome = async () :  Promise<Day[]> => {
   try {
     const token = await loadAccessToken();
-    const response = await api.get<{ data: any[] }>('/api/diary/');
+    const response = await api.get<{ data: any[] }>('/api/day/');
 
     if (response.data && Array.isArray(response.data.data)) {
-      return response.data.data.map(diary => ({
-        id: diary.id,
-        date: diary.date,
-        wrote_diary: diary.day?.wrote_diary,
-        emotion: diary.day?.emotion || null,
-        todos: Array.isArray(diary.day?.todos)
-          ? diary.day.todos.map((todo: any) => todo.is_done)
-          : [], // ✅ diary.todos가 없으면 빈 배열
+      return response.data.data.map(day => ({
+        id: day.id,
+        date: day.date,
+        wrote_diary: day.wrote_diary,
+        emotion: day?.emotion || null,
+        total_todo:day.total_todo,
+        completed_todo:day.completed_todo,
       }));
     } else {
       console.error('예상치 못한 API 응답 형식:', response.data);

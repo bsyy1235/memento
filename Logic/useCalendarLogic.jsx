@@ -99,7 +99,6 @@ export const useCalendarLogic = () => {
     if (diariesCache === null || currentTime - lastFetchTime > CACHE_DURATION || forceRefresh) {
       try {
         const diaries = await getDiaryHome();
-
         setDiariesCache(diaries);
         setLastFetchTime(currentTime);
         const newStatusCache = {};
@@ -107,15 +106,13 @@ export const useCalendarLogic = () => {
           const dateString = diary.date;
           const hasDiary = diary.wrote_diary === true;
           const hasEmotion = diary.emotion !== null;
-
-          // diary.todos는 boolean 배열이므로, true가 하나라도 있으면 완료 처리
-          const todoCompleted = diary.todos.some(Boolean);
-
+          const todoCompleted = ((diary.total_todo>0)&&(diary.total_todo==diary.completed_todo))?true:false;
           const emotion = diary.emotion; // '기쁨', '슬픔', ...
+          
           newStatusCache[dateString] = {
            todoCompleted,
            diaryStatus: hasDiary ? "completed" : "none",
-           feeling: hasEmotion ? diary.emotion : null, 
+           feeling: hasEmotion ? emotion : null, 
          };
         });
         
