@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import { Colors } from "../../constants/Colors";
+import { Colors } from "../constants/Colors";
 
 export default function DiarySelectionModal({ visible, onClose, onSelect }) {
   return (

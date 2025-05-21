@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from "expo-router";
-import { useCalendarLogic } from "../terms/useCalendarLogic.jsx";
+import { useCalendarLogic } from "../../Logic/useCalendarLogic";
 import { Colors } from "../../constants/Colors";
 import { format } from "date-fns";
 import { getDiaryByDate } from '../../utils/diary';

@@ -8,9 +8,7 @@ import { Colors } from "../../../constants/Colors.ts";
 import { useDarkMode } from "../../DarkModeContext.jsx";
 import { format } from "date-fns";
 import { useRouter , useLocalSearchParams } from 'expo-router';
-import { formatDateHeader,createYearButtons, createMonthButtons, createDayButtons} from "../../terms/diaryFunction.jsx";
-import DatePickerModal from "../../terms/DatePickerModal2.jsx";
-import { handleDateSelect } from "../../terms/DatePickerModal2.jsx";
+import { formatDateHeader} from "../../../Logic/diaryFunction.jsx";
 import { saveDiary, finalSave, getDiaryByDate} from '../../../utils/diary.tsx';
 
 export default function DiaryEditor() {

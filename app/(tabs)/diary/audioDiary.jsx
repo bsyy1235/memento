@@ -10,10 +10,10 @@ import { format } from "date-fns";
 import { useRouter , useLocalSearchParams } from 'expo-router';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
-import { formatDateHeader} from "../../terms/diaryFunction.jsx";
+import { formatDateHeader} from "../../../Logic/diaryFunction.jsx";
 import { saveDiary, finalSave, getDiaryByDate} from '../../../utils/diary.tsx';
 import { SERVER_URL } from "../../../utils/api";
-import { useSoundLogic } from "../../terms/useSoundLogic";
+import { useSoundLogic } from "../../../Logic/useSoundLogic.jsx";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function DiaryEditor() {

@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import { createYearButtons, createMonthButtons, createDayButtons} from "../../terms/diaryFunction.jsx";
-import DatePickerModal from "../../terms/DatePickerModal2";
-import DiaryPickerModal from "../../terms/DiaryPickerModal";
+import { createYearButtons, createMonthButtons, createDayButtons} from "../../../Logic/diaryFunction.jsx";
+import DatePickerModal from "../../../Logic/DatePickerModal2";
+import DiaryPickerModal from "../../../Logic/DiaryPickerModal.jsx";
 import { useRouter } from 'expo-router';
 import { Colors } from "../../../constants/Colors.ts";
 import { useFocusEffect } from '@react-navigation/native';

@@ -5,11 +5,11 @@ import { Colors } from "../../../constants/Colors";
 import { useDarkMode } from "../../DarkModeContext.jsx";
 import { getDiaryByDate, updateEmotion, getAudioFile } from '../../../utils/diary';
 import { format } from 'date-fns';
-import {formatDateHeader} from "../../terms/diaryFunction.jsx";
+import {formatDateHeader} from "../../../Logic/diaryFunction.jsx";
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
-import { useSoundLogic } from "../../terms/useSoundLogic";
+import { useSoundLogic } from "../../../Logic/useSoundLogic";
 
 export default function DiaryFinal({ route }) {
     const [showNewDiv, setShowNewDiv] = useState(false);
