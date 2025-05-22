@@ -17,16 +17,35 @@ import { useDarkMode } from "../DarkModeContext";
 
 import { sendEmailVerificationCode, verifyEmailCode } from "../../utils/api"; // 위치 맞춰서 import
 
-import { updatePassword } from "../../utils/api.ts"; // 경로 맞게 조정
+import { resetPasswordByEmail } from "../../utils/api.ts"; // 경로 맞게 조정
 
 export default function FindPW() {
   const { isDarkMode } = useDarkMode();
-  const [agreeIdentifier, setAgreeIdentifier] = useState(false);
 
   const [email, setEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+
+  const [passwordLengthError, setPasswordLengthError] = useState("");
+  const [passwordFormatError, setPasswordFormatError] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [isVerified, setIsVerified] = useState(false);
+
+  function validatePasswordFields(pw) {
+    if (pw.length < 8 || pw.length > 20) {
+      setPasswordLengthError("비밀번호는 8자 이상 20자 이하이어야 합니다.");
+    } else {
+      setPasswordLengthError("");
+    }
+
+    const formatRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/;
+    if (!formatRegex.test(pw)) {
+      setPasswordFormatError("영문자, 숫자, 특수문자를 모두 포함해야 합니다.");
+    } else {
+      setPasswordFormatError("");
+    }
+  }
 
   const sendVerificationCode = async () => {
     if (!email.trim()) {
@@ -36,13 +55,6 @@ export default function FindPW() {
 
     try {
       const res = await sendEmailVerificationCode(email.trim());
-      // const send_code =
-      //   typeof res === "string"
-      //     ? res
-      //     : typeof res?.message === "string"
-      //     ? res.message
-      //     : JSON.stringify(res);
-
       Alert.alert(
         "인증번호 발송",
         `인증번호가 발송되었습니다.${"\n"}인증번호를 입력해주세요.`
@@ -60,27 +72,53 @@ export default function FindPW() {
 
     try {
       const res = await verifyEmailCode(email.trim(), verificationCode.trim());
-      // const success_msg =
-      //   typeof res === "string"
-      //     ? res
-      //     : typeof res?.message === "string"
-      //     ? res.message
-      //     : JSON.stringify(res);
+      setIsVerified(true); // ✅ 인증 성공 표시
       Alert.alert("인증 성공", "이메일 인증 성공"); // ex: "인증 성공"
       // 필요 시 상태 저장: setIsVerified(true);
     } catch (err) {
-      // Alert.alert("인증 실패", "인증에 실패했습니다."); //err.message
-      console.error("❌ 인증 실패:", err.response?.data || err.message);
-      Alert.alert("인증 실패", err.message || "인증에 실패했습니다.");
+      setIsVerified(false); // ✅ 인증 실패시 인증 무효화
+      const msg = err.message || "";
+      // 특정 에러 메시지를 감지해 한국어로 번역
+      if (msg.includes("Invalid verification code")) {
+        Alert.alert("인증 실패", "인증번호가 다릅니다.");
+      } else {
+        Alert.alert("인증 실패", "인증에 실패했습니다.");
+      }
     }
   };
 
   const resetPassword = async () => {
+    if (!isVerified) {
+      Alert.alert("인증 필요", "이메일 인증을 먼저 완료해주세요.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      Alert.alert("비밀번호 불일치", "비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    if (passwordLengthError || passwordFormatError) {
+      Alert.alert("알림", "비밀번호 조건을 확인해주세요.");
+      return;
+    }
+
+    if (!newPassword.trim() || !confirmPassword.trim()) {
+      Alert.alert("알림", "새 비밀번호와 비밀번호 확인란을 모두 입력해주세요.");
+      return;
+    }
+
     try {
-      await updatePassword(currentPassword, newPassword);
-      Alert.alert("성공", "비밀번호가 변경되었습니다.");
+      await resetPasswordByEmail(email.trim(), newPassword);
+      Alert.alert("성공", "비밀번호가 성공적으로 변경되었습니다.", [
+        {
+          text: "확인",
+          onPress: () => router.push("./login"), // ✅ 여기서 login으로 이동
+        },
+      ]);
     } catch (err) {
       Alert.alert("오류", err.message || "비밀번호 변경에 실패했습니다.");
+      // ✅ API호출 문제 시.
     }
   };
 
@@ -121,14 +159,16 @@ export default function FindPW() {
             />
             <TouchableOpacity onPress={sendVerificationCode}>
               <View
-                style={{
-                  borderRadius: 100,
-                  paddingVertical: 6, // 글자 여백 확보용 (1.5는 너무 작아서 실제로는 이 정도 필요)
-                  paddingHorizontal: 12,
-                  backgroundColor: Colors.subPrimary,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+                style={[
+                  {
+                    borderRadius: 100,
+                    paddingVertical: 6, // 글자 여백 확보용 (1.5는 너무 작아서 실제로는 이 정도 필요)
+                    paddingHorizontal: 12,
+                    backgroundColor: isDarkMode ? "#e0e0e0" : Colors.subPrimary,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  },
+                ]}
               >
                 <Text style={{ fontSize: 12 }}>인증번호 발송</Text>
               </View>
@@ -149,43 +189,30 @@ export default function FindPW() {
               style={styles.divText}
               placeholder="인증번호 *"
               value={verificationCode}
-              onChangeText={setVerificationCode}
+              onChangeText={(text) => {
+                setVerificationCode(text);
+                setIsVerified(false); // ✅ 입력 바뀌면 다시 인증 필요
+              }}
             />
             <TouchableOpacity onPress={checkVerificationCode}>
               <View
-                style={{
-                  borderRadius: 100,
-                  paddingVertical: 6, // 글자 여백 확보용 (1.5는 너무 작아서 실제로는 이 정도 필요)
-                  paddingHorizontal: 12,
-                  backgroundColor: Colors.subPrimary,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+                style={[
+                  {
+                    borderRadius: 100,
+                    paddingVertical: 6, // 글자 여백 확보용 (1.5는 너무 작아서 실제로는 이 정도 필요)
+                    paddingHorizontal: 12,
+                    backgroundColor: isDarkMode ? "#e0e0e0" : Colors.subPrimary,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  },
+                ]}
               >
                 <Text style={{ fontSize: 12 }}>인증 확인</Text>
               </View>
             </TouchableOpacity>
           </View>
         </View>
-        <View>
-          <View style={styles.subheader}>
-            <Text>기존 비밀번호</Text>
-          </View>
-          <View
-            style={[
-              styles.div,
-              { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
-            ]}
-          >
-            <TextInput
-              style={styles.divText}
-              placeholder="기존 비밀번호 *"
-              secureTextEntry={true}
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-            />
-          </View>
-        </View>
+
         <View>
           <View style={styles.subheader}>
             <Text>새 비밀번호</Text>
@@ -201,7 +228,54 @@ export default function FindPW() {
               placeholder="비밀번호 재설정 *"
               secureTextEntry={true}
               value={newPassword}
-              onChangeText={setNewPassword}
+              onChangeText={(text) => {
+                setNewPassword(text);
+                validatePasswordFields(text);
+              }}
+            />
+          </View>
+          {/* 유효성 검사 메시지 */}
+          {!!passwordLengthError && (
+            <Text
+              style={{
+                color: "red",
+                fontSize: 12,
+                marginLeft: 5,
+                marginBottom: 2,
+              }}
+            >
+              {passwordLengthError}
+            </Text>
+          )}
+          {!!passwordFormatError && (
+            <Text
+              style={{
+                color: "red",
+                fontSize: 12,
+                marginLeft: 5,
+                marginBottom: 12,
+              }}
+            >
+              {passwordFormatError}
+            </Text>
+          )}
+        </View>
+        <View>
+          <View style={styles.subheader}>
+            <Text>새 비밀번호</Text>
+          </View>
+          <View
+            style={[
+              styles.div,
+              { backgroundColor: isDarkMode ? "white" : Colors.subPrimary },
+            ]}
+          >
+            <TextInput
+              style={styles.divText}
+              placeholder="비밀번호 확인 *"
+              secureTextEntry={true}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
             />
           </View>
         </View>
@@ -267,7 +341,7 @@ const styles = StyleSheet.create({
     // justifyContent: "",
   },
   divText: {
-    color: "grey",
+    color: "#000",
     fontSize: 15,
     fontFamily: "roboto",
     fontWeight: "400",
@@ -291,5 +365,11 @@ const styles = StyleSheet.create({
   buttontext: {
     fontSize: 16,
     opacity: 0.8,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginLeft: 5,
+    marginBottom: 2,
   },
 });
