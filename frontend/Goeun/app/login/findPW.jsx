@@ -262,7 +262,7 @@ export default function FindPW() {
         </View>
         <View>
           <View style={styles.subheader}>
-            <Text>비밀번호 확인</Text>
+            <Text>새 비밀번호</Text>
           </View>
           <View
             style={[

@@ -7,7 +7,7 @@ export default function DiaryLayout() {
         headerShown: false, // 필요에 따라 true/false
       }}
     >
-      <Stack.Screen name="diary" />
+      <Stack.Screen name="index" />
     </Stack>
   );
 }

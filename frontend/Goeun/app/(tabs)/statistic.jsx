@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,9 @@ import {
   TouchableOpacity,
 } from "react-native";
 
+import { useFocusEffect } from "@react-navigation/native";
+import { getStatisticsByYear } from "../../utils/stat";
+
 import { useDarkMode } from "../DarkModeContext";
 
 export default function Stat() {
@@ -15,44 +18,25 @@ export default function Stat() {
 
   const [selectedYear, setSelectedYear] = useState(2025);
 
-  // 가상의 통계 데이터
-  const statistics = {
-    totalDiaries: 142,
+  const [statistics, setStatistics] = useState({
+    totalDiaries: 0,
     emotionData: {
-      happy: 48,
-      neutral: 62,
-      sad: 18,
-      tired: 14,
+      neutral: 0,
+      joy: 0,
+      anger: 0,
+      sadness: 0,
+      tired: 0,
     },
-  };
+  });
 
-  // 가상의 연간 감정 데이터 (2025년)
-  // 형식: monthlyData[월-1][일-1] = 감정 코드 ('happy', 'neutral', 'sad', 'tired' 또는 null)
-  const generateMonthlyData = () => {
-    const data = Array(12)
+  const [monthlyData, setMonthlyData] = useState(
+    Array(12)
       .fill()
-      .map(() => Array(31).fill(null));
-
-    // 샘플 데이터 채우기
-    const emotions = ["happy", "neutral", "sad", "tired"];
-
-    // 1월~4월 데이터 (현재까지의 데이터라고 가정)
-    for (let month = 0; month < 12; month++) {
-      const daysInMonth = new Date(selectedYear, month + 1, 0).getDate();
-      for (let day = 0; day < daysInMonth; day++) {
-        // 랜덤으로 70%의 날에만 감정 데이터 있음
-        if (Math.random() > 0.3) {
-          const randomEmotion =
-            emotions[Math.floor(Math.random() * emotions.length)];
-          data[month][day] = randomEmotion;
-        }
-      }
-    }
-
-    return data;
-  };
-
-  const monthlyData = generateMonthlyData();
+      .map(() => Array(31).fill(null))
+  );
+  // 로딩 및 에러 상태 추가
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // 월 이름 리스트
   const monthNames = [
@@ -72,18 +56,20 @@ export default function Stat() {
 
   // 감정에 따른 색상 매핑
   const emotionColors = {
-    happy: "#FFCBEB",
+    joy: "#FFCBEB",
     neutral: "#FFDCC4",
-    sad: "#CAD2F8",
+    sadness: "#CAD2F8",
     tired: "#D8B1D6",
+    anger: "#FF6347",
     null: "#FFFFFF",
   };
 
   // 감정 이름 매핑
   const emotionNames = {
-    happy: "기쁨",
     neutral: "중립",
-    sad: "슬픔",
+    joy: "기쁨",
+    anger: "화남",
+    sadness: "슬픔",
     tired: "지침",
   };
 
@@ -92,140 +78,221 @@ export default function Stat() {
     setSelectedYear(selectedYear + delta);
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const data = await getStatisticsByYear(selectedYear);
+          setStatistics({
+            totalDiaries: data?.totalDiaries ?? 0,
+            emotionData: data?.emotionData ?? {
+              happy: 0,
+              anger: 0,
+              neutral: 0,
+              sad: 0,
+              tired: 0,
+            },
+          });
+          setMonthlyData(
+            data?.monthlyEmotionData ??
+              Array(12)
+                .fill()
+                .map(() => Array(31).fill(null))
+          );
+        } catch (error) {
+          console.error("통계 불러오기 실패:", error);
+          setError("통계 데이터를 불러오는데 실패했습니다. 다시 시도해주세요.");
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
+    }, [selectedYear])
+  );
+
+  // API 호출 함수
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const data = await getStatisticsByYear(selectedYear);
+
+        setStatistics({
+          totalDiaries: data?.totalDiaries ?? 0,
+          emotionData: data?.emotionData ?? {
+            joy: 0,
+            anger: 0,
+            neutral: 0,
+            sadness: 0,
+            tired: 0,
+          },
+        });
+
+        setMonthlyData(
+          data?.monthlyEmotionData ??
+            Array(12)
+              .fill()
+              .map(() => Array(31).fill(null))
+        );
+      } catch (error) {
+        console.error("통계 불러오기 실패:", error);
+        setError("통계 데이터를 불러오는데 실패했습니다. 다시 시도해주세요.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [selectedYear]);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollContainer}>
         <Text style={styles.header}>통계</Text>
 
-        {/* 총 일기 개수 */}
-        <View style={styles.statisticItem}>
-          <Text style={styles.statisticLabel}>총 일기 개수:</Text>
-          <Text style={styles.statisticValue}>{statistics.totalDiaries}개</Text>
-        </View>
-
-        {/* 감정 트래커 */}
-        <Text style={styles.sectionTitle}>감정 트래커</Text>
-        <View
-          style={[
-            styles.emotionTracker,
-            {
-              backgroundColor: isDarkMode
-                ? "#efefef"
-                : "rgba(255,230,213, 0.5)",
-            },
-          ]}
-        >
-          {Object.entries(emotionNames).map(([key, name]) => (
-            <View key={key} style={styles.emotionItem}>
-              <View
-                style={[
-                  styles.emotionBox,
-                  { backgroundColor: emotionColors[key] },
-                ]}
-              />
-              <Text style={styles.emotionText}>{name}</Text>
-              <Text style={styles.emotionCount}>
-                {statistics.emotionData[key]}개
+        {loading ? (
+          <Text style={styles.message}>데이터를 불러오는 중...</Text>
+        ) : error ? (
+          <Text style={styles.errorMessage}>{error}</Text>
+        ) : (
+          <>
+            {/* 총 일기 개수 */}
+            <View style={styles.statisticItem}>
+              <Text style={styles.statisticLabel}>총 일기 개수:</Text>
+              <Text style={styles.statisticValue}>
+                {statistics.totalDiaries}개
               </Text>
             </View>
-          ))}
-        </View>
 
-        {/* 연간 트래커 */}
-        <View style={styles.yearSelector}>
-          <TouchableOpacity
-            onPress={() => changeYear(-1)}
-            style={styles.yearArrow}
-          >
-            <Text style={styles.yearArrowText}>{"<"}</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.yearText}>{selectedYear}년</Text>
-
-          <TouchableOpacity
-            onPress={() => changeYear(1)}
-            style={styles.yearArrow}
-          >
-            <Text style={styles.yearArrowText}>{">"}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* 연간 감정 트래커 표 */}
-        <View horizontal style={styles.tableContainer}>
-          <View>
-            {/* 표 헤더 (월) */}
-            <View style={styles.tableRow}>
-              <View
-                style={[
-                  styles.tableHeaderCell,
-                  {
-                    backgroundColor: isDarkMode
-                      ? "#efefef"
-                      : "rgba(255,230,213, 0.5)",
-                  },
-                ]}
-              >
-                <Text style={styles.tableHeaderText}>날짜</Text>
-              </View>
-              {monthNames.map((month, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.tableHeaderCell,
-                    {
-                      backgroundColor: isDarkMode
-                        ? "#efefef"
-                        : "rgba(255,230,213, 0.5)",
-                    },
-                  ]}
-                >
-                  <Text style={styles.tableHeaderText}>{month}</Text>
+            {/* 감정 트래커 */}
+            <Text style={styles.sectionTitle}>감정 트래커</Text>
+            <View
+              style={[
+                styles.emotionTracker,
+                {
+                  backgroundColor: isDarkMode
+                    ? "#efefef"
+                    : "rgba(255,230,213, 0.5)",
+                },
+              ]}
+            >
+              {Object.entries(emotionNames).map(([key, name]) => (
+                <View key={key} style={styles.emotionItem}>
+                  <View
+                    style={[
+                      styles.emotionBox,
+                      { backgroundColor: emotionColors[key] },
+                    ]}
+                  />
+                  <Text style={styles.emotionText}>{name}</Text>
+                  <Text style={styles.emotionCount}>
+                    {statistics.emotionData[key]}개
+                  </Text>
                 </View>
               ))}
             </View>
 
-            {/* 표 행 (일) */}
-            {Array.from({ length: 31 }, (_, dayIndex) => (
-              <View key={dayIndex} style={styles.tableRow}>
-                {/* 날짜 셀 */}
-                <View
-                  style={[
-                    styles.tableDateCell,
-                    {
-                      backgroundColor: isDarkMode
-                        ? "#efefef"
-                        : "rgba(255,230,213, 0.5)",
-                    },
-                  ]}
-                >
-                  <Text style={styles.tableDateText}>{dayIndex + 1}</Text>
-                </View>
+            {/* 연간 트래커 */}
+            <View style={styles.yearSelector}>
+              <TouchableOpacity
+                onPress={() => changeYear(-1)}
+                style={styles.yearArrow}
+              >
+                <Text style={styles.yearArrowText}>{"<"}</Text>
+              </TouchableOpacity>
 
-                {/* 각 월의 해당 일 데이터 */}
-                {Array.from({ length: 12 }, (_, monthIndex) => {
-                  const emotion = monthlyData[monthIndex][dayIndex];
-                  const isValidDay =
-                    dayIndex <
-                    new Date(selectedYear, monthIndex + 1, 0).getDate();
+              <Text style={styles.yearText}>{selectedYear}년</Text>
 
-                  return (
+              <TouchableOpacity
+                onPress={() => changeYear(1)}
+                style={styles.yearArrow}
+              >
+                <Text style={styles.yearArrowText}>{">"}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* 연간 감정 트래커 표 */}
+            <View style={styles.tableContainer}>
+              <View>
+                {/* 표 헤더 (월) */}
+                <View style={styles.tableRow}>
+                  <View
+                    style={[
+                      styles.tableHeaderCell,
+                      {
+                        backgroundColor: isDarkMode
+                          ? "#efefef"
+                          : "rgba(255,230,213, 0.5)",
+                      },
+                    ]}
+                  >
+                    <Text style={styles.tableHeaderText}>날짜</Text>
+                  </View>
+                  {monthNames.map((month, index) => (
                     <View
-                      key={monthIndex}
+                      key={index}
                       style={[
-                        styles.tableCell,
+                        styles.tableHeaderCell,
                         {
-                          backgroundColor: isValidDay
-                            ? emotionColors[emotion]
-                            : "#F5F5F5",
+                          backgroundColor: isDarkMode
+                            ? "#efefef"
+                            : "rgba(255,230,213, 0.5)",
                         },
                       ]}
-                    />
-                  );
-                })}
+                    >
+                      <Text style={styles.tableHeaderText}>{month}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* 표 행 (일) */}
+                {Array.from({ length: 31 }, (_, dayIndex) => (
+                  <View key={dayIndex} style={styles.tableRow}>
+                    {/* 날짜 셀 */}
+                    <View
+                      style={[
+                        styles.tableDateCell,
+                        {
+                          backgroundColor: isDarkMode
+                            ? "#efefef"
+                            : "rgba(255,230,213, 0.5)",
+                        },
+                      ]}
+                    >
+                      <Text style={styles.tableDateText}>{dayIndex + 1}</Text>
+                    </View>
+
+                    {/* 각 월의 해당 일 데이터 */}
+                    {Array.from({ length: 12 }, (_, monthIndex) => {
+                      const emotion = monthlyData[monthIndex][dayIndex];
+                      const isValidDay =
+                        dayIndex <
+                        new Date(selectedYear, monthIndex + 1, 0).getDate();
+
+                      return (
+                        <View
+                          key={monthIndex}
+                          style={[
+                            styles.tableCell,
+                            {
+                              backgroundColor: isValidDay
+                                ? emotionColors[emotion]
+                                : "#F5F5F5",
+                            },
+                          ]}
+                        />
+                      );
+                    })}
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
-        </View>
+            </View>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -233,7 +300,7 @@ export default function Stat() {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: "10",
+    flex: 1,
     justifyContent: "center",
     width: "100%",
     padding: 20,
@@ -261,11 +328,23 @@ const styles = StyleSheet.create({
   },
   statisticLabel: {
     fontSize: 16,
-    marginRight: 8,
+    fontWeight: "bold",
+    marginRight: 5,
   },
   statisticValue: {
     fontSize: 18,
     fontWeight: "bold",
+  },
+  message: {
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: 20,
+  },
+  errorMessage: {
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: 20,
+    color: "red",
   },
   // 감정 트래커 스타일
   emotionTracker: {
@@ -277,20 +356,20 @@ const styles = StyleSheet.create({
   emotionItem: {
     flexDirection: "row",
     alignItems: "center",
-    width: "25%",
+    width: "20%",
   },
   emotionBox: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     borderRadius: 4,
-    marginRight: 4,
+    marginRight: 2,
   },
   emotionText: {
-    fontSize: 10,
-    marginRight: 4,
+    fontSize: 11,
+    marginRight: 2,
   },
   emotionCount: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "bold",
   },
   // 연도 선택기 스타일
@@ -298,7 +377,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginVertical: 16,
+    marginVertical: 13,
   },
   yearArrow: {
     padding: 8,
@@ -316,13 +395,14 @@ const styles = StyleSheet.create({
   tableContainer: {
     width: "100%",
     marginBottom: 20,
+    overflow: "scroll",
   },
   tableRow: {
     flexDirection: "row",
     height: 15,
   },
   tableHeaderCell: {
-    width: "26",
+    width: 26,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 0.5,

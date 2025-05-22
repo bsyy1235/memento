@@ -1,5 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import React, { useState, useEffect } from "react";
+import { useLocalSearchParams } from "expo-router";
 import {
   StyleSheet,
   Text,
@@ -25,6 +26,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "expo-router";
 import { setAccessToken } from "../../utils/api";
 import { useCallback } from "react";
+import { format } from "date-fns";
 
 import {
   createTodo,
@@ -41,52 +43,125 @@ export default function todo() {
   const [editingKey, setEditingKey] = useState(null); // 어떤 todo를 수정중인지
   const [editingText, setEditingText] = useState(""); // 수정 중인 텍스트
   const [isEditing, setIsEditing] = useState(false);
+
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
   const [nickname, setNickname] = useState("");
 
   const { isDarkMode } = useDarkMode();
 
   const onChangeText = (payload) => setText(payload); // save
 
+  // 날짜별 할 일 불러오는 함수 추가
+  const loadTodosByDate = async (date) => {
+    try {
+      const token = await AsyncStorage.getItem("access_token");
+      if (!token) {
+        Alert.alert("인증 오류", "로그인이 필요합니다.");
+        router.replace("../login/login.jsx");
+        return;
+      }
+
+      setAccessToken(token);
+      const formattedDate = format(date, "yyyy-MM-dd");
+      const todos = await getTodosByDate(formattedDate);
+      setTodos(todos);
+    } catch (err) {
+      console.error("할 일 불러오기 실패:", err);
+      setTodos([]);
+      Alert.alert("에러", "할 일을 불러오는데 실패했습니다.");
+    }
+  };
+
+  const params = useLocalSearchParams();
+  useEffect(() => {
+    if (params?.date) {
+      const parsedDate = new Date(params.date);
+      if (!isNaN(parsedDate)) {
+        setSelectedDate(parsedDate);
+        loadTodosByDate(parsedDate); // 날짜가 변경될 때마다 할 일 목록 다시 불러오기
+      }
+    }
+  }, [params?.date]);
+
+  //   useFocusEffect(
+  // //   useCallback(() => {
+  // //     loadTodosByDate(selectedDate);
+  // //   }, [selectedDate])
+  // // );
+  //     useCallback(() => {
+  //       const fetchTodosWithToken = async () => {
+  //         const token = await AsyncStorage.getItem("access_token");
+  //         console.log("🧾 불러온 토큰:", token); // 이게 null이라면 저장 실패!
+  //         if (!token) {
+  //           Alert.alert("인증 오류", "로그인이 필요합니다.");
+  //           router.replace("../login/login.jsx"); // 💡 로그인 화면으로 이동
+  //           return;
+  //         }
+
+  //         setAccessToken(token); // ✅ 헤더 설정
+
+  //         try {
+  //           const user = await getCurrentUser();
+  //           setNickname(user.nickname); // ✅ 닉네임 설정
+  //         } catch (e) {
+  //           console.warn("닉네임 로드 실패:", e.message);
+  //         }
+
+  //         const today = new Date().toISOString().split("T")[0];
+
+  //         try {
+  //           const todos = await getTodosByDate(today);
+  //           setTodos(todos);
+  //         } catch (err) {
+  //           setTodos([]);
+  //         }
+  //       };
+
+  //       fetchTodosWithToken();
+  //     }, [])
+  //   );
+
   useFocusEffect(
     useCallback(() => {
-      const fetchTodosWithToken = async () => {
+      const fetchData = async () => {
         const token = await AsyncStorage.getItem("access_token");
-        console.log("🧾 불러온 토큰:", token); // 이게 null이라면 저장 실패!
+        console.log("🧾 불러온 토큰:", token);
+
         if (!token) {
           Alert.alert("인증 오류", "로그인이 필요합니다.");
-          router.replace("../login/login.jsx"); // 💡 로그인 화면으로 이동
+          router.replace("../login/login.jsx");
           return;
         }
 
-        setAccessToken(token); // ✅ 헤더 설정
+        setAccessToken(token);
 
         try {
           const user = await getCurrentUser();
-          setNickname(user.nickname); // ✅ 닉네임 설정
+          setNickname(user.nickname);
         } catch (e) {
           console.warn("닉네임 로드 실패:", e.message);
         }
 
-        const today = new Date().toISOString().split("T")[0];
-
         try {
-          const todos = await getTodosByDate(today);
+          const todos = await getTodosByDate(selectedDate);
           setTodos(todos);
         } catch (err) {
+          console.warn("할 일 로드 실패:", err.message);
           setTodos([]);
         }
       };
 
-      fetchTodosWithToken();
-    }, [])
+      fetchData();
+    }, [selectedDate])
   );
 
   const addTodo = async () => {
     if (text.trim() === "") return;
 
-    const today = new Date().toISOString().split("T")[0];
+    const formattedDate = format(selectedDate, "yyyy-MM-dd");
     try {
-      const newTodo = await createTodo(text, false, today);
+      const newTodo = await createTodo(text, false, formattedDate);
       setTodos([...todos, newTodo]);
       setText("");
     } catch (err) {

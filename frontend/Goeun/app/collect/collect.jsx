@@ -1,54 +1,64 @@
-import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-  TouchableOpacity,
-} from "react-native";
-import { Ionicons, FontAwesome } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { Image } from "react-native";
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { Image } from 'react-native';
+import { getAllDiaries } from '../../utils/diary';
+import { format, parseISO } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import { useDarkMode } from "../DarkModeContext";
 
 export default function Collect() {
-  const { isDarkMode } = useDarkMode();
-
   const router = useRouter();
-  // 가상의 다이어리 데이터
-  const diaries = [
-    {
-      id: 1,
-      date: "4월 15일",
-      content:
-        "오늘은 친구와 함께 카페에 갔다. 오랜만에 만나서 많은 이야기를 나눴다. 날씨가 정말 좋아서 카페 테라스에 앉아 시간 가는 줄 모르고 이야기했다. 여름이 다가오는 것이 느껴졌다. 다음에는 한강으로 피크닉을 가기로 했다.",
-      hasAudio: true,
-    },
-    {
-      id: 2,
-      date: "4월 13일",
-      content:
-        "회사에서 새로운 프로젝트를 시작했다. 팀원들과 함께 아이디어 회의를 진행했는데, 생각보다 많은 아이디어가 나와서 놀랐다. 특히 민지가 제안한 아이디어가 모두에게 좋은 평가를 받았다. 이번 프로젝트는 잘 될 것 같은 예감이 든다.",
-      hasAudio: true,
-    },
-    {
-      id: 3,
-      date: "4월 10일",
-      content:
-        "오랜만에 운동을 시작했다. 요즘 너무 앉아서 일만 하다 보니 몸이 뻐근하다. 가벼운 조깅부터 시작했는데, 생각보다 체력이 떨어져 있었다. 그래도 상쾌한 아침 공기를 마시니 기분이 좋았다. 앞으로 매일 아침 30분씩 운동하는 습관을 들여야겠다.",
-      hasAudio: false,
-    },
-  ];
+  const [diaries, setDiaries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { isDarkMode, setIsDarkMode } = useDarkMode();
 
-  // 다이어리 상세 보기 함수
-  const handleViewMore = (id) => {
-    router.push("../diary");
+  const emotionColors = {
+    '기쁨': '#FFCBEB',
+    '중립': '#FFDCC4',
+    '슬픔': '#CAD2F8',
+    '지침': '#D8B1D6',
+    '화남': '#FF6347',
   };
 
-  // 음성 재생 함수
-  const handlePlayAudio = (id) => {
-    alert(`다이어리 ID ${id}의 음성을 재생합니다.`);
+  useEffect(() => {
+    const fetchDiaries = async () => {
+      try {
+        setLoading(true);
+        const diaryData = await getAllDiaries();
+        diaryData.sort((a, b) => new Date(b.date) - new Date(a.date));
+        setDiaries(diaryData);
+      } catch (err) {
+        console.error('다이어리 데이터 불러오기 실패:', err);
+        setError('다이어리를 불러오는 중 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDiaries();
+  }, []);
+
+  const formatDate = (dateString) => {
+    try {
+      const date = parseISO(dateString);
+      return format(date, 'M월 d일', { locale: ko });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const handleViewMore = (date, emotion,audio_path) => {
+    let target = "";
+    if(emotion)
+      target = "../diary/DiaryFinal";
+    else if(audio_path)
+      target = "../diary/audioDiary";
+    else
+      target = "../diary/textDiary";
+    router.push({ pathname: target, params: { date } });
   };
 
   return (
@@ -63,6 +73,12 @@ export default function Collect() {
       </TouchableOpacity>
       <Text style={styles.header}>다이어리 모아보기</Text>
 
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#F88C6B" />
+          <Text style={styles.loadingText}>다이어리를 불러오는 중...</Text>
+        </View>
+      ) : (
       <ScrollView style={styles.scrollContainer}>
         {diaries.map((diary) => (
           <View key={diary.id} style={styles.diaryItem}>
@@ -83,12 +99,21 @@ export default function Collect() {
                 {diary.content}
               </Text>
 
+              {diary.emotion ? (
+                  <View style={[
+                    styles.emotionContainer,
+                    { backgroundColor: emotionColors[diary.emotion] || '#EEE' }
+                  ]}>
+                   <Text style={styles.emotionText}>{diary.emotion}</Text>
+                  </View>
+                ) : null}
+
               {/* 버튼 컨테이너 */}
               <View style={styles.buttonsContainer}>
                 {/* 음성 버튼 (음성이 있는 경우에만 표시) */}
                 {diary.hasAudio && (
                   <TouchableOpacity
-                    style={styles.audioButton}
+                    style={stysles.audioButton}
                     onPress={() => handlePlayAudio(diary.id)}
                   >
                     <Image
@@ -101,7 +126,7 @@ export default function Collect() {
                 {/* 더보기 버튼 */}
                 <TouchableOpacity
                   style={styles.viewMoreButton}
-                  onPress={() => handleViewMore(diary.id)}
+                  onPress={() => handleViewMore(diary.date, diary.emotion, diary.audio_path)}
                 >
                   <Text style={styles.viewMoreButtonText}>더보기</Text>
                 </TouchableOpacity>
@@ -110,6 +135,7 @@ export default function Collect() {
           </View>
         ))}
       </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
@@ -200,4 +226,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#4d4a49",
   },
-});
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 10, fontSize: 16, color: '#666' },
+  emotionContainer: { position: 'absolute', top: 12, right: 12, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4 },
+  emotionText: { fontSize: 12, color: '#4d4a49' },
+  audioButton: { marginBottom: 2, width: 20, height: 20, right: 7, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  audioIcon: { width: 20, height: 20, resizeMode: 'contain' },
+}); 
