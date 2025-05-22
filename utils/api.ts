@@ -1,9 +1,9 @@
 import axios from "axios";
 import { storeAccessToken } from "./token";
 
-const BASE_URL = "http://coolchick.site/"; // 백엔드 서버 주소
+const BASE_URL = "https://coolchick.site/"; // 백엔드 서버 주소
 
-export const SERVER_URL = BASE_URL;
+export const SERVER_URL = "https://coolchick.site";
 
 const api = axios.create({
   baseURL: BASE_URL,

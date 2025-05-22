@@ -9,7 +9,7 @@ import { useDarkMode } from "../../DarkModeContext.jsx";
 import { format } from "date-fns";
 import { useRouter , useLocalSearchParams } from 'expo-router';
 import { formatDateHeader} from "../../../Logic/diaryFunction.jsx";
-import { saveDiary, finalSave, getDiaryByDate} from '../../../utils/diary.tsx';
+import { saveTextDiary, finalSave, getDiaryByDate} from '../../../utils/diary.tsx';
 
 export default function DiaryEditor() {
     const [showNewDiv, setShowNewDiv] = useState(false);
@@ -129,7 +129,7 @@ const handleComment = async () => {
     const handleSaveDiary = async () => {
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
       try {
-        await saveDiary({ content: diaryText, date: formattedDate });
+        await saveTextDiary({ content: diaryText, date: formattedDate });
         Alert.alert("임시저장 완료", "다이어리가 저장되었습니다.");
       } catch (err) {
         console.error("저장 실패:", err);

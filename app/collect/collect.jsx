@@ -113,8 +113,7 @@ export default function Collect() {
                 {/* 음성 버튼 (음성이 있는 경우에만 표시) */}
                 {diary.hasAudio && (
                   <TouchableOpacity
-                    style={stysles.audioButton}
-                    onPress={() => handlePlayAudio(diary.id)}
+                    style={styles.audioButton}
                   >
                     <Image
                       style={styles.audioIcon}

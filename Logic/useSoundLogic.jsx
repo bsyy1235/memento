@@ -4,355 +4,200 @@ import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import { format } from "date-fns";
 
-// 앱 폴더로 파일 복사
-const moveRecordingToAppDir = async (originalUri, date) => {
-  if (!originalUri) return null;
-  const fileName = `recording_${date}.wav`;
-  const destPath = FileSystem.documentDirectory + fileName;
-  const fileInfo = await FileSystem.getInfoAsync(destPath);
-  if (fileInfo.exists) return destPath;
-  await FileSystem.copyAsync({ from: originalUri, to: destPath });
-  return destPath;
-};
 
 export const useSoundLogic = () => {
-    // 음원 재생 관련 상태 추가
-    const [sound, setSound] = useState(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [currentPosition, setCurrentPosition] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [recording, setRecording] = useState(null); // Audio.Recording 인스턴스
+  const [sound, setSound] = useState(null); // Audio.Sound 인스턴스
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [recordingUri, setRecordingUri] = useState(null); // 로컬 파일 경로
+  const [hasRecording, setHasRecording] = useState(false);
+  const [timer, setTimer] = useState(null); // 녹음 시간 측정용 타이머
+  const [isLoading, setIsLoading] = useState(false); // 로딩 상태
 
-    // 음원 녹음, 정지
-    const [recording, setRecording] = useState(null);
-    const [isRecording, setIsRecording] = useState(false);
-    const [isPaused, setIsPaused] = useState(false);
-    const [recordingDuration, setRecordingDuration] = useState(0);
-    const [recordingUri, setRecordingUri] = useState(null);
-    const MAX_RECORDING_TIME = 300000; // 5분 (ms)
-    const recordingTimeoutRef = useRef(null);
-    const recordingStartTimeRef = useRef(null);
-    const recordingRef = useRef(null);
-    const [remainingTime, setRemainingTime] = useState(MAX_RECORDING_TIME);
-
-      // 녹음 객체 상태 동기화
-  useEffect(() => {
-    recordingRef.current = recording;
-  }, [recording]);
-
-  // 음원 재생/정지 함수
-  const togglePlayback = async () => {
-    try {
-      if (sound) {
-        const status = await sound.getStatusAsync();
-        if (status.isLoaded) {
-          if (isPlaying) {
-            // 재생 중이면 정지
-            await sound.pauseAsync();
-            setIsPlaying(false);
-          } else {
-            // 정지 중이면 처음부터 재생
-            await sound.setPositionAsync(0);
-            await sound.playAsync();
-            setIsPlaying(true);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('오디오 재생 오류:', error);
-      Alert.alert("오류", "음원을 재생할 수 없습니다.");
-    }
-  };
-
- // 사운드 상태 업데이트 리스너 설정
-  const setupAudioStatusUpdates = (soundObject) => {
-    soundObject.setOnPlaybackStatusUpdate(async (status) => {
-      if (status.isLoaded) {
-        setIsPlaying(status.isPlaying);
-        setCurrentPosition(status.positionMillis || 0);
-        
-        // 재생이 끝나면 자동으로 정지하고 처음 위치로 되돌리기
-        if (status.didJustFinish) {
-          await soundObject.stopAsync();
-          await soundObject.setPositionAsync(0);
-          setIsPlaying(false);
-          setCurrentPosition(0);
-        }
-      }
-    });
-  };
-
-  // 녹음 파일 재생 (항상 처음부터)
-const playRecording = async () => {
-  if (!recordingUri) return;
+const clearRecordingResources = async () => {
   try {
-    let player = sound;
-    if (!player) {
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: recordingUri }, { shouldPlay: false }
-      );
-      setSound(newSound);
-      player = newSound;
-      newSound.setOnPlaybackStatusUpdate(async (status) => {
-        if (status.didJustFinish) {
-          await newSound.stopAsync();
-          await newSound.setPositionAsync(0);
-          setIsPlaying(false);
-        }
-      });
+    if (global.recordingInstance) {
+      try { await global.recordingInstance.stopAndUnloadAsync(); } catch (e) {}
+      global.recordingInstance = null;
     }
-    player.setOnPlaybackStatusUpdate((status) => {
-      if (status.didJustFinish) setIsPlaying(false);
+    if (recording) {
+      try { await recording.stopAndUnloadAsync(); } catch (e) {}
+      setRecording(null);
+    }
+    // 오디오 모드 강제 해제
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: false,
     });
-    await player.setPositionAsync(0);
-    await player.playAsync();
-    setIsPlaying(true);
+    await new Promise(res => setTimeout(res, 1000)); // 1초 대기
   } catch (e) {
-    Alert.alert('재생 오류', e.message || String(e));
+    // 무시
   }
 };
-// 재생 일시정지
-const pausePlaying = async () => {
-  if (!sound) return;
-  try {
-    await sound.pauseAsync();
-    setIsPlaying(false);
-  } catch (e) {}
+
+ const handleStartRecording = async () => {
+  console.log("녹음버튼 눌림");
+  
+  // 이미 녹음된 파일이 있는 경우 확인 창 표시
+  if (hasRecording || recordingUri) {
+    Alert.alert(
+      "재녹음하시겠습니까?",
+      "이전 녹음이 삭제되고 새로 녹음됩니다.",
+      [
+        { text: "취소", style: "cancel" },
+        { text: "재녹음", style: "destructive", onPress: startRecording }
+      ]
+    );
+  } else {
+    startRecording();
+  }
 };
-
-
-// 시간 포맷팅 함수
-  const formatTime = (milliseconds) => {
-    const seconds = Math.floor(milliseconds / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
 
 const startRecording = async () => {
-  // 이미 녹음 중이면 중복 방지
-  if (isRecording) return;
-
-  // 1. 녹음 객체 ref로 안전하게 관리
-  if (recordingRef.current) {
-    try {
-      const status = await recordingRef.current.getStatusAsync();
-      if (status.isRecording) {
-        await recordingRef.current.stopAndUnloadAsync();
-      } else {
-        await recordingRef.current.unloadAsync();
-      }
-    } catch (e) {
-      console.log('녹음 정리 오류:', e);
-    }
-    setRecording(null);
-    recordingRef.current = null;
-    // 리소스 정리 시간 확보 (필수!)
-    await new Promise(res => setTimeout(res, 300));
-  }
-
-  // 2. 기존 사운드 객체 정리 (재생 중이라면)
-  if (sound) {
-    try {
-      await sound.unloadAsync();
-    } catch (e) {
-      console.log('사운드 정리 오류:', e);
-    }
-    setSound(null);
-  }
-
-  // 3. 오디오 권한 요청
-  const { status } = await Audio.requestPermissionsAsync();
-  if (status !== 'granted') {
-    Alert.alert('권한 필요', '녹음을 위해 마이크 접근 권한이 필요합니다.');
-    return;
-  }
-
-  // 4. 오디오 모드 설정
-  await Audio.setAudioModeAsync({
-    allowsRecordingIOS: true,
-    playsInSilentModeIOS: true,
-    shouldDuckAndroid: true,
-    playThroughEarpieceAndroid: false,
-  });
-
   try {
-    // 5. 새 녹음 세션 생성
-    const { recording: newRecording } = await Audio.Recording.createAsync(
-      Audio.RecordingOptionsPresets.HIGH_QUALITY
-    );
-    setRecording(newRecording);
-    recordingRef.current = newRecording;
-    setIsRecording(true);
+    console.log("녹음 시작 준비...");
+    await clearRecordingResources();
+    
+    // 1. 기존 자원 정리 (전역 객체 참조)
+    if (global.recordingInstance) {
+      console.log("전역 녹음 인스턴스 발견, 해제 시도");
+      try {
+        await global.recordingInstance.stopAndUnloadAsync();
+      } catch (e) {
+        console.log("전역 인스턴스 해제 오류(무시됨):", e);
+      }
+      global.recordingInstance = null;
+    }
+    
+    // 2. 로컬 상태의 녹음 객체 정리
+    if (recording) {
+      console.log("로컬 녹음 상태 발견, 해제 시도");
+      try {
+        await recording.stopAndUnloadAsync();
+      } catch (e) {
+        console.log("로컬 인스턴스 해제 오류(무시됨):", e);
+      }
+      setRecording(null);
+    }
+    
+    // 3. 사운드 객체 정리
+    if (sound) {
+      try {
+        await sound.unloadAsync();
+      } catch (e) {
+        console.log("사운드 해제 오류(무시됨):", e);
+      }
+      setSound(null);
+    }
+    
+    // 4. 타이머 정리
+    if (timer) {
+      clearInterval(timer);
+      setTimer(null);
+    }
+    
+    // 5. 상태 초기화
+    setIsRecording(false);
     setIsPaused(false);
     setRecordingDuration(0);
-
-    // 6. 녹음 제한 타이머 설정
-    recordingStartTimeRef.current = Date.now();
-    setRemainingTime(MAX_RECORDING_TIME);
-    if (recordingTimeoutRef.current) {
-      clearTimeout(recordingTimeoutRef.current);
-    }
-    recordingTimeoutRef.current = setTimeout(() => {
-      stopRecording(); // 반드시 ref 기반 stopRecording 사용!
-      Alert.alert("알림", "최대 녹음 시간(5분)을 초과하였습니다.");
-    }, MAX_RECORDING_TIME);
-
-  } catch (err) {
-    console.error('녹음 시작 실패:', err);
-    Alert.alert('오류', '녹음을 시작할 수 없습니다.');
-    setIsRecording(false);
-    setRecording(null);
-    recordingRef.current = null;
-  }
-};
-
-
-  // 녹음 일시정지
-const pauseRecording = async () => {
-  if (!recording) return;
-  try {
-    await recording.pauseAsync();
-    setIsRecording(false);
-    setIsPaused(true);
-
-    // 경과시간만큼 남은 시간 계산, 타이머 해제
-    if (recordingStartTimeRef.current) {
-      const elapsed = Date.now() - recordingStartTimeRef.current;
-      setRemainingTime((prev) => prev - elapsed);
-    }
-    if (recordingTimeoutRef.current) {
-      clearTimeout(recordingTimeoutRef.current);
-      recordingTimeoutRef.current = null;
-    }
-
-  } catch (e) {
-    console.error('녹음 일시정지 실패', e);
-  }
-};
-
-// 이어서 녹음
-  const resumeRecording = async () => {
-  if (!recording) return;
-  try {
-    await recording.startAsync();
-    setIsRecording(true);
-    setIsPaused(false);
-
-    // 이어서 녹음 시 남은 시간만큼만 타이머 재실행
-    recordingStartTimeRef.current = Date.now();
-    recordingTimeoutRef.current = setTimeout(() => {
-      stopRecording();
-      Alert.alert("알림", "최대 녹음 시간(5분)을 초과하였습니다.");
-    }, remainingTime);
-  } catch (e) {
-    console.error('녹음 재개 실패', e);
-  }
-};
-
-// 녹음 중지 (안전한 경로로 이동)
-const stopRecording = async (selectedDate ) => {
-  if (!recording) return;
-  
-  try {
-    // 타이머 해제, 상태 초기화
-    if (recordingTimeoutRef.current) {
-      clearTimeout(recordingTimeoutRef.current);
-      recordingTimeoutRef.current = null;
-    }
-    setRemainingTime(MAX_RECORDING_TIME);
-    recordingStartTimeRef.current = null;
+    setHasRecording(false);
+    setRecordingUri(null);
     
-    setIsRecording(false);
-    const currentRecording = recording;
-    setRecording(null);
+    console.log("모든 자원 정리 완료");
     
-    // 녹음 URI 가져오기
-    let uri;
-    try {
-      uri = currentRecording.getURI();
-      console.log('녹음 URI:', uri);
-    } catch (uriErr) {
-      console.error('녹음 URI 가져오기 실패:', uriErr);
-    }
-    
-     // 녹음 중지/해제 (안전 체크!)
-    try {
-      if (
-        currentRecording &&
-        typeof currentRecording.getStatusAsync === "function"
-      ) {
-        const status = await currentRecording.getStatusAsync();
-        if (
-          status.isRecording ||
-          status.isDoneRecording
-        ) {
-          if (typeof currentRecording.stopAndUnloadAsync === "function") {
-            await currentRecording.stopAndUnloadAsync();
-          }
-        } else {
-          // unloadAsync가 함수일 때만 호출
-          if (typeof currentRecording.unloadAsync === "function") {
-            await currentRecording.unloadAsync();
-          }
-        }
-      }
-    } catch (stopErr) {
-      console.log(
-        "녹음 중지 중 오류(계속 진행):",
-        stopErr
-      );
-    }
-    
-    // Audio 세션 완전히 재설정
-    try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-        playThroughEarpieceAndroid: false,
-        staysActiveInBackground: false,
-      });
-    } catch (audioErr) {
-      console.log('오디오 모드 재설정 오류:', audioErr);
-    }
-    
+    // 6. 약간의 지연을 주어 모든 리소스가 해제되도록 함
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    if (uri) {
-      const formattedDate = format(selectedDate, "yyyy-MM-dd");
-      const safeUri = await moveRecordingToAppDir(uri, formattedDate);
-      setRecordingUri(safeUri);
-      Alert.alert('저장 완료', '녹음 파일이 저장되었습니다.');
+    // 7. 권한 확인
+    const { status } = await Audio.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('권한 거부', '마이크 권한을 허용해야 녹음할 수 있습니다.');
+      return;
     }
     
+    // 8. 오디오 모드 설정
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: true,
+      playsInSilentModeIOS: true,
+      shouldDuckAndroid: true,
+      playThroughEarpieceAndroid: false,
+    });
+    
+    console.log("녹음 객체 생성 시작");
+    
+    // 9. 새 녹음 객체 생성 - 구조분해할당 없이 전체 결과 받기
+    const recordingResult = await Audio.Recording.createAsync(
+      Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
+    );
+    
+    // 10. 녹음 객체 검증 및 상태 설정
+    if (recordingResult && recordingResult.recording) {
+      // 전역 변수에도 저장하여 앱 어디서든 접근 가능하게 함
+      global.recordingInstance = recordingResult.recording;
+      
+      // 상태 업데이트
+      setRecording(recordingResult.recording);
+      setIsRecording(true);
+      
+      // 타이머 시작
+      const id = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+      setTimer(id);
+      
+      console.log("녹음 시작 성공!");
+    } else {
+      console.error("녹음 객체가 생성되지 않았습니다:", recordingResult);
+      Alert.alert("오류", "녹음을 시작할 수 없습니다. 앱을 다시 시작해보세요.");
+    }
   } catch (err) {
-    console.error('녹음 중지 실패:', err);
-    Alert.alert('오류', '녹음을 중지할 수 없습니다.');
-  } finally {
-    // 확실하게 모든 상태 초기화
-    setIsRecording(false);
-    setRecording(null);
+    console.log('녹음 시작 오류:', err);
+    Alert.alert("녹음 오류", "녹음을 시작하는 중 문제가 발생했습니다.");
   }
 };
 
 
-    return {
-        sound, setSound,
-        isPlaying, setIsPlaying,
-        currentPosition,setCurrentPosition,
-        recording, setRecording,
-        isRecording, setIsRecording,
-        isPaused, setIsPaused,
-        recordingDuration, setRecordingDuration,
-        recordingUri, setRecordingUri,
-        recordingTimeoutRef,MAX_RECORDING_TIME,setRemainingTime,
-        recordingStartTimeRef,
+const pauseRecording = async () => {
+  if (recording && isRecording && !isPaused) {
+    await recording.pauseAsync();
+    setIsPaused(true);
+    clearInterval(timer);
+  }
+};
+const resumeRecording = async () => {
+  if (recording && isRecording && isPaused) {
+    await recording.startAsync();
+    setIsPaused(false);
+    // 타이머 재시작
+    const id = setInterval(() => {
+      setRecordingDuration(prev => prev + 1);
+    }, 1000);
+    setTimer(id);
+  }
+};
+const pausePlaying = async () => {
+  if (sound && isPlaying) {
+    await sound.pauseAsync();
+    setIsPlaying(false);
+  }
+};
 
-        togglePlayback,
-        setupAudioStatusUpdates,
-        playRecording, pausePlaying,
-        formatTime,
-        startRecording,
-        pauseRecording,
-        resumeRecording,
-        stopRecording,
+    return {
+      isRecording, setIsRecording,
+      isPaused, setIsPaused,
+      isPlaying, setIsPlaying,
+      recording, setRecording,
+      sound, setSound,
+      recordingDuration, setRecordingDuration,
+      recordingUri, setRecordingUri,
+      hasRecording, setHasRecording,
+      timer, setTimer,
+      isLoading, setIsLoading,
+      handleStartRecording,
+      startRecording, pauseRecording,
+       pausePlaying, 
   };
 };

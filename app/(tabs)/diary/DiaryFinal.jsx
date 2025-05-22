@@ -97,38 +97,8 @@ export default function DiaryFinal({ route }) {
       if (res?.audio_path && res.audio_path !== "empty") {
         const file_path = res.audio_path;
         const audioUrl = await getAudioFile(file_path);
-        console.log("audioUrl",audioUrl);
 
-        const fileName = file_path.split('/').pop() || 'audio.wav';
-        const localUri = FileSystem.documentDirectory + fileName;
-        console.log("localUri",localUri);
-        try {
-          await FileSystem.downloadAsync(audioUrl, localUri);
-          const fileInfo = await FileSystem.getInfoAsync(localUri);
-          if (!fileInfo.exists) {
-            setRecordingUri(null); setRecordingDuration(0); setLoading(false);
-            Alert.alert("오디오 파일 다운로드 실패");
-            return;
-          }
-          // setRecordingUri는 로컬 파일로!
-          setRecordingUri(localUri);
 
-          // 기존 사운드 언로드
-          if (sound) await sound.unloadAsync();
-          const { sound: loadedSound } = await Audio.Sound.createAsync({ uri: audioUrl });
-          setSound(loadedSound);
-          setupAudioStatusUpdates(loadedSound);
-          const status = await loadedSound.getStatusAsync();
-          if (status?.durationMillis) {
-            setRecordingDuration(Math.floor(status.durationMillis / 1000));
-          } else setRecordingDuration(0);
-
-        } catch (e) {
-          setRecordingUri(null); setRecordingDuration(0); setLoading(false);
-          Alert.alert("오디오 파일을 불러올 수 없습니다.");
-          console.log('[AUDIO LOAD ERROR]', e, localUri);
-          return;
-        }
       } else {
         setRecordingUri(null); setRecordingDuration(0);
         if (sound) { await sound.unloadAsync(); setSound(null); }
