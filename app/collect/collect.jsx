@@ -1,12 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { Image } from 'react-native';
-import { getAllDiaries } from '../../utils/diary';
-import { format, parseISO } from 'date-fns';
-import { ko } from 'date-fns/locale';
-import { useDarkMode } from "../DarkModeContext";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { Image } from "react-native";
+import { getAllDiaries } from "../../utils/diary";
+import { format, parseISO } from "date-fns";
+import { ko } from "date-fns/locale";
+import { useDarkMode } from "../../contexts/DarkModeContext";
 
 export default function Collect() {
   const router = useRouter();
@@ -16,11 +24,11 @@ export default function Collect() {
   const { isDarkMode, setIsDarkMode } = useDarkMode();
 
   const emotionColors = {
-    '기쁨': '#FFCBEB',
-    '중립': '#FFDCC4',
-    '슬픔': '#CAD2F8',
-    '지침': '#D8B1D6',
-    '화남': '#FF6347',
+    기쁨: "#FFCBEB",
+    중립: "#FFDCC4",
+    슬픔: "#CAD2F8",
+    지침: "#D8B1D6",
+    화남: "#FF6347",
   };
 
   useEffect(() => {
@@ -31,8 +39,8 @@ export default function Collect() {
         diaryData.sort((a, b) => new Date(b.date) - new Date(a.date));
         setDiaries(diaryData);
       } catch (err) {
-        console.error('다이어리 데이터 불러오기 실패:', err);
-        setError('다이어리를 불러오는 중 오류가 발생했습니다.');
+        console.error("다이어리 데이터 불러오기 실패:", err);
+        setError("다이어리를 불러오는 중 오류가 발생했습니다.");
       } finally {
         setLoading(false);
       }
@@ -44,20 +52,21 @@ export default function Collect() {
   const formatDate = (dateString) => {
     try {
       const date = parseISO(dateString);
-      return format(date, 'M월 d일', { locale: ko });
+      return format(date, "M월 d일", { locale: ko });
     } catch {
       return dateString;
     }
   };
 
-  const handleViewMore = (date, emotion,audio_path) => {
+  const breakLongWords = (text, maxLength = 20) => {
+    return text.replace(new RegExp(`(\\S{${maxLength}})`, "g"), "$1 ");
+  };
+
+  const handleViewMore = (date, emotion, audio_path) => {
     let target = "";
-    if(emotion)
-      target = "../diary/DiaryFinal";
-    else if(audio_path!="empty")
-      target = "../diary/audioDiary";
-    else
-      target = "../diary/textDiary";
+    if (emotion) target = "../diary/DiaryFinal";
+    else if (audio_path != "empty") target = "../diary/audioDiary";
+    else target = "../diary/textDiary";
     router.push({ pathname: target, params: { date } });
   };
 
@@ -79,61 +88,77 @@ export default function Collect() {
           <Text style={styles.loadingText}>다이어리를 불러오는 중...</Text>
         </View>
       ) : (
-      <ScrollView style={styles.scrollContainer}>
-        {diaries.map((diary) => (
-          <View key={diary.id} style={styles.diaryItem}>
-            <Text style={styles.dateText}>{diary.date}</Text>
+        <ScrollView style={styles.scrollContainer}>
+          {diaries.map((diary) => (
+            <View key={diary.id} style={styles.diaryItem}>
+              <Text style={styles.dateText}>{diary.date}</Text>
 
-            <View
-              style={[
-                styles.diaryContent,
-                {
-                  backgroundColor: isDarkMode
-                    ? "rgba(255, 255, 255, 0.5)"
-                    : "rgba(255,230,213, 0.5)",
-                },
-              ]}
-            >
-              {/* 다이어리 내용 (최대 5줄) */}
-              <Text numberOfLines={5} style={styles.contentText}>
-                {diary.content}
-              </Text>
-
-              {diary.emotion ? (
-                  <View style={[
-                    styles.emotionContainer,
-                    { backgroundColor: emotionColors[diary.emotion] || '#EEE' }
-                  ]}>
-                   <Text style={styles.emotionText}>{diary.emotion}</Text>
-                  </View>
-                ) : null}
-
-              {/* 버튼 컨테이너 */}
-              <View style={styles.buttonsContainer}>
-                {/* 음성 버튼 (음성이 있는 경우에만 표시) */}
-                {diary.hasAudio && (
-                  <TouchableOpacity
-                    style={styles.audioButton}
+              <View
+                style={[
+                  styles.diaryContent,
+                  {
+                    backgroundColor: isDarkMode
+                      ? "rgba(255, 255, 255, 0.5)"
+                      : "rgba(255,230,213, 0.5)",
+                  },
+                ]}
+              >
+                {/* 다이어리 내용 (최대 5줄) */}
+                <View style={styles.leftContent}>
+                  <Text
+                    numberOfLines={5}
+                    ellipsizeMode="tail"
+                    style={styles.contentText}
                   >
-                    <Image
-                      style={styles.audioIcon}
-                      source={require("../../assets/images/icon_voice_mine.png")}
-                    />
-                  </TouchableOpacity>
-                )}
+                    {breakLongWords(diary.content)}
+                  </Text>
+                </View>
+                <View style={styles.rightContent}>
+                  {diary.emotion ? (
+                    <View
+                      style={[
+                        styles.emotionContainer,
+                        {
+                          backgroundColor:
+                            emotionColors[diary.emotion] || "#EEE",
+                        },
+                      ]}
+                    >
+                      <Text style={styles.emotionText}>{diary.emotion}</Text>
+                    </View>
+                  ) : null}
 
-                {/* 더보기 버튼 */}
-                <TouchableOpacity
-                  style={styles.viewMoreButton}
-                  onPress={() => handleViewMore(diary.date, diary.emotion, diary.audio_path)}
-                >
-                  <Text style={styles.viewMoreButtonText}>더보기</Text>
-                </TouchableOpacity>
+                  {/* 버튼 컨테이너 */}
+                  <View style={styles.buttonsContainer}>
+                    {/* 음성 버튼 (음성이 있는 경우에만 표시) */}
+                    {diary.hasAudio && (
+                      <TouchableOpacity style={styles.audioButton}>
+                        <Image
+                          style={styles.audioIcon}
+                          source={require("../../assets/images/icon_voice_mine.png")}
+                        />
+                      </TouchableOpacity>
+                    )}
+
+                    {/* 더보기 버튼 */}
+                    <TouchableOpacity
+                      style={styles.viewMoreButton}
+                      onPress={() =>
+                        handleViewMore(
+                          diary.date,
+                          diary.emotion,
+                          diary.audio_path
+                        )
+                      }
+                    >
+                      <Text style={styles.viewMoreButtonText}>더보기</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
             </View>
-          </View>
-        ))}
-      </ScrollView>
+          ))}
+        </ScrollView>
       )}
     </SafeAreaView>
   );
@@ -174,6 +199,21 @@ const styles = StyleSheet.create({
     position: "relative",
     borderWidth: 0.5,
     borderColor: "rgba(158, 150, 150, .5)",
+    flexDirection: "row",
+    width: "100%",
+    maxWidth: "100%",
+  },
+  leftContent: {
+    flex: 1, // 남은 공간 모두 사용
+    paddingRight: 12, // 오른쪽 여백 확보
+  },
+  rightContent: {
+    width: 70, // 버튼과 감정 라벨을 위한 고정 너비
+    marginTop: -3,
+    marginBottom: -8,
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    flexDirection: "column",
   },
   diaryDiv: {
     // backgroundColor: Colors.subPrimary,
@@ -188,17 +228,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#4d4a49",
     lineHeight: 20,
-    marginBottom: 40, // 버튼을 위한 공간 확보
+    flexShrink: 1,
+    flexWrap: "wrap",
+    width: "100%",
   },
   buttonsContainer: {
-    position: "absolute",
-    bottom: 5,
-    right: 7,
+    // position: "absolute",
+    // bottom: 5,
+    // right: 7,
     flexDirection: "column",
     alignItems: "flex-end",
   },
   audioButton: {
-    marginBottom: 2,
     width: 20,
     height: 20,
     right: 7,
@@ -215,7 +256,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   viewMoreButton: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 5,
     paddingVertical: 6,
     borderRadius: 12,
     justifyContent: "center",
@@ -225,10 +266,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#4d4a49",
   },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 10, fontSize: 16, color: '#666' },
-  emotionContainer: { position: 'absolute', top: 12, right: 12, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4 },
-  emotionText: { fontSize: 12, color: '#4d4a49' },
-  audioButton: { marginBottom: 2, width: 20, height: 20, right: 7, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
-  audioIcon: { width: 20, height: 20, resizeMode: 'contain' },
-}); 
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loadingText: { marginTop: 10, fontSize: 16, color: "#666" },
+  emotionContainer: {
+    // position: "absolute",
+    // top: 12,
+    // right: 12,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    maxWidth: "100%",
+  },
+  emotionText: { fontSize: 12, color: "#4d4a49" },
+});

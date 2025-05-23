@@ -20,7 +20,7 @@ import { getCurrentUser } from "../../utils/api";
 import { Colors } from "../../constants/Colors";
 // import DraggableFlatList from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler"; // ScrollView를 포함함.
-import { useDarkMode } from "../DarkModeContext";
+import { useDarkMode } from "../../contexts/DarkModeContext";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "expo-router";
@@ -34,8 +34,6 @@ import {
   updateTodo,
   deleteTodoById,
 } from "../../utils/api";
-
-const STORAGE_KEY = "@toDos";
 
 export default function todo() {
   const [text, setText] = useState("");
@@ -64,6 +62,9 @@ export default function todo() {
       setAccessToken(token);
       const formattedDate = format(date, "yyyy-MM-dd");
       const todos = await getTodosByDate(formattedDate);
+
+      todos.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
       setTodos(todos);
     } catch (err) {
       console.error("할 일 불러오기 실패:", err);
@@ -83,11 +84,11 @@ export default function todo() {
     }
   }, [params?.date]);
 
-    useFocusEffect(
-      useCallback(() => {
-        loadTodosByDate(selectedDate);
-      }, [selectedDate])
-   );
+  useFocusEffect(
+    useCallback(() => {
+      loadTodosByDate(selectedDate);
+    }, [selectedDate])
+  );
 
   useFocusEffect(
     useCallback(() => {

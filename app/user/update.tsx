@@ -13,7 +13,7 @@ import { useRouter } from "expo-router";
 import { updateUserPartial } from "../../utils/api";
 
 import { Colors } from "../../constants/Colors";
-import { useDarkMode } from "../DarkModeContext";
+import { useDarkMode } from "../../contexts/DarkModeContext";
 
 import {
   sendEmailVerificationCode,

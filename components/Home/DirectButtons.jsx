@@ -3,7 +3,7 @@ import React from "react";
 import { Colors } from "./../../constants/Colors.ts";
 import { useNavigation } from "@react-navigation/native";
 import { router } from "expo-router";
-import { useDarkMode } from "../../app/DarkModeContext";
+import { useDarkMode } from "../../contexts/DarkModeContext.jsx";
 
 //expo-router에서는 (tabs) 안의 파일만 탭 시스템에 속해.
 export default function DirectButtons() {

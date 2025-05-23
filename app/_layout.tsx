@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import React, { useEffect } from "react";
-import { DarkModeProvider } from "./DarkModeContext";
+import { DarkModeProvider } from "../contexts/DarkModeContext";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAccessToken } from "../utils/api";
