@@ -32,8 +32,6 @@ export default function DiaryFinal({ route }) {
         sound, setSound,
         isPlaying, setIsPlaying,
         currentPosition, setCurrentPosition,
-        togglePlayback,
-        setupAudioStatusUpdates,
         formatTime,} = useSoundLogic();
 
     const router = useRouter();

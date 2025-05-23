@@ -3,7 +3,9 @@ import { useState, useRef, useEffect } from "react";
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import { format } from "date-fns";
+import { getDiaryByDate } from "../utils/diary";
 
+const MAX_RECORDING_SECONDS = 300; 
 
 export const useSoundLogic = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -35,6 +37,44 @@ const clearRecordingResources = async () => {
     await new Promise(res => setTimeout(res, 1000)); // 1초 대기
   } catch (e) {
     // 무시
+  }
+};
+
+  // 눅음 중지 버튼
+  const handleStopRecording = async (selectedDate) => {
+  if (recording && (isRecording || isPaused)) {
+    clearInterval(timer);
+    try {
+      await recording.stopAndUnloadAsync();
+      const tempUri = await recording.getURI();
+
+      const formattedDate = format(selectedDate, "yyyy-MM-dd");
+      const res = await getDiaryByDate(formattedDate);
+      const diaryId = res ? res.id : `temp_${formattedDate}`;
+      const localUri = FileSystem.cacheDirectory + `voice_${diaryId}.wav`;
+      if (tempUri !== localUri) {
+        // 기존 파일 삭제
+        const fileInfo = await FileSystem.getInfoAsync(localUri);
+        if (fileInfo.exists) await FileSystem.deleteAsync(localUri, { idempotent: true });
+        // 새 파일 복사
+        await FileSystem.copyAsync({ from: tempUri, to: localUri });
+      }
+      
+      setRecordingUri(localUri);
+      setIsRecording(false);
+      setIsPaused(false);
+      setHasRecording(true);
+      setRecording(null);
+
+      // 기존 오디오 사운드 언로드(필요시)
+      if (sound) {
+        await sound.unloadAsync();
+        setSound(null);
+      }
+
+    } catch (err) {
+      console.log('녹음 정지 오류:', err);
+    }
   }
 };
 
@@ -144,7 +184,17 @@ const startRecording = async () => {
       
       // 타이머 시작
       const id = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
+        setRecordingDuration(prev => {
+          // 5분(300초) 제한: 자동 중지
+          if (prev + 1 >= MAX_RECORDING_SECONDS) {
+            clearInterval(id);
+            setTimer(null);
+            handleStopRecording(); // 자동으로 녹음 정지 함수 호출
+            Alert.alert("알림", "최대 5분까지만 녹음할 수 있습니다.");
+            return prev; // 바로 리턴 (더 이상 증가 안 함)
+          }
+          return prev + 1;
+        });
       }, 1000);
       setTimer(id);
       
@@ -178,6 +228,63 @@ const resumeRecording = async () => {
     setTimer(id);
   }
 };
+
+  const playRecording = async (selectedDate) => {
+  try {
+    let uri = recordingUri;
+
+    // 1. recordingUri가 없으면 getDiaryByDate로 id 받아오기
+    if (!uri && selectedDate) {
+      setIsLoading(true);
+      const formattedDate = format(selectedDate, "yyyy-MM-dd");
+      const diaryRes = await getDiaryByDate(formattedDate);
+
+      // diary_id 추출
+      const diaryId = diaryRes?.id;
+
+      if (!diaryId) {
+        setIsLoading(false);
+        Alert.alert("일기 ID 없음", "오디오 파일을 찾을 수 없습니다.");
+        return;
+      }
+
+      const url = `${SERVER_URL}/api/file/${diaryId}`;
+      const fileName = `voice_${diaryId}.wav`;
+      const localUri = FileSystem.cacheDirectory + fileName;
+
+      // 기존 파일 삭제
+      const info = await FileSystem.getInfoAsync(localUri);
+      if (info.exists) await FileSystem.deleteAsync(localUri);
+
+      const downloadResult = await FileSystem.downloadAsync(url, localUri);
+      console.log('[DEBUG] 다운로드 결과:', downloadResult);
+      const fileInfo = await FileSystem.getInfoAsync(localUri);
+      console.log('[DEBUG] fileInfo:', fileInfo);
+      uri = localUri;
+      setIsLoading(false);
+    }
+
+    if (!uri) return;
+
+    console.log("재생 직전 uri:", uri);
+    const { sound } = await Audio.Sound.createAsync({ uri });
+    setSound(sound);
+    setIsPlaying(true);
+
+    sound.setOnPlaybackStatusUpdate(status => {
+      if (status.didJustFinish) {
+        setIsPlaying(false);
+        sound.unloadAsync();
+      }
+    });
+
+    await sound.playAsync();
+  } catch (err) {
+    Alert.alert('오디오 재생 실패', err.message || String(err));
+    console.log('[재생 오류]', err, uri);
+    setIsPlaying(false);
+  }
+};
 const pausePlaying = async () => {
   if (sound && isPlaying) {
     await sound.pauseAsync();
@@ -198,6 +305,6 @@ const pausePlaying = async () => {
       isLoading, setIsLoading,
       handleStartRecording,
       startRecording, pauseRecording,
-       pausePlaying, 
+      playRecording, pausePlaying, handleStopRecording
   };
 };

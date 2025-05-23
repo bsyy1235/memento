@@ -47,9 +47,9 @@ export default function DiaryEditor() {
       hasRecording, setHasRecording,
       timer, setTimer,
       isLoading, setIsLoading,
-      handleStartRecording,
+      handleStartRecording, handleStopRecording,
       startRecording, pauseRecording, resumeRecording,
-      pausePlaying, } = useSoundLogic();
+      playRecording, pausePlaying, } = useSoundLogic();
 
     const router = useRouter();
     if (!router) return null;
@@ -93,62 +93,7 @@ useEffect(() => {
 }, [recordingUri]);
 
 
-  const playRecording = async () => {
-  try {
-    let uri = recordingUri;
 
-    // 1. recordingUri가 없으면 getDiaryByDate로 id 받아오기
-    if (!uri && selectedDate) {
-      setIsLoading(true);
-      const formattedDate = format(selectedDate, "yyyy-MM-dd");
-      const diaryRes = await getDiaryByDate(formattedDate);
-
-      // diary_id 추출
-      const diaryId = diaryRes?.id;
-
-      if (!diaryId) {
-        setIsLoading(false);
-        Alert.alert("일기 ID 없음", "오디오 파일을 찾을 수 없습니다.");
-        return;
-      }
-
-      const url = `${SERVER_URL}/api/file/${diaryId}`;
-      const fileName = `voice_${diaryId}.wav`;
-      const localUri = FileSystem.cacheDirectory + fileName;
-
-      // 기존 파일 삭제
-      const info = await FileSystem.getInfoAsync(localUri);
-      if (info.exists) await FileSystem.deleteAsync(localUri);
-
-      const downloadResult = await FileSystem.downloadAsync(url, localUri);
-      console.log('[DEBUG] 다운로드 결과:', downloadResult);
-      const fileInfo = await FileSystem.getInfoAsync(localUri);
-      console.log('[DEBUG] fileInfo:', fileInfo);
-      uri = localUri;
-      setIsLoading(false);
-    }
-
-    if (!uri) return;
-
-    console.log("재생 직전 uri:", uri);
-    const { sound } = await Audio.Sound.createAsync({ uri });
-    setSound(sound);
-    setIsPlaying(true);
-
-    sound.setOnPlaybackStatusUpdate(status => {
-      if (status.didJustFinish) {
-        setIsPlaying(false);
-        sound.unloadAsync();
-      }
-    });
-
-    await sound.playAsync();
-  } catch (err) {
-    Alert.alert('오디오 재생 실패', err.message || String(err));
-    console.log('[재생 오류]', err, uri);
-    setIsPlaying(false);
-  }
-};
 
   // 시간 포맷팅 함수 (00:00:00 형식)
   function formatTime(sec) {
@@ -275,43 +220,7 @@ useEffect(() => {
   fetchDiary();
 }, [selectedDate, isInitialized]);
 
-  // 눅음 중지 버튼
-  const handleStopRecording = async () => {
-  if (recording && (isRecording || isPaused)) {
-    clearInterval(timer);
-    try {
-      await recording.stopAndUnloadAsync();
-      const tempUri = await recording.getURI();
 
-      const formattedDate = format(selectedDate, "yyyy-MM-dd");
-      const res = await getDiaryByDate(formattedDate);
-      const diaryId = res.id;
-      const localUri = FileSystem.cacheDirectory + `voice_${diaryId}.wav`;
-      if (tempUri !== localUri) {
-        // 기존 파일 삭제
-        const fileInfo = await FileSystem.getInfoAsync(localUri);
-        if (fileInfo.exists) await FileSystem.deleteAsync(localUri, { idempotent: true });
-        // 새 파일 복사
-        await FileSystem.copyAsync({ from: tempUri, to: localUri });
-      }
-      
-      setRecordingUri(localUri);
-      setIsRecording(false);
-      setIsPaused(false);
-      setHasRecording(true);
-      setRecording(null);
-
-      // 기존 오디오 사운드 언로드(필요시)
-      if (sound) {
-        await sound.unloadAsync();
-        setSound(null);
-      }
-
-    } catch (err) {
-      console.log('녹음 정지 오류:', err);
-    }
-  }
-};
 
 // 음성 파일 저장
  const handleSaveDiary = async () => {
@@ -343,7 +252,6 @@ const handleComment = async () => {
       setIsLoading(true);
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
       try {
-          // 오디오 파일 정보 추출
           const audioFile = await FileSystem.getInfoAsync(recordingUri);
           await finalSave({ 
             date: formattedDate,
@@ -355,7 +263,7 @@ const handleComment = async () => {
     
         setTimeout(() => {
           router.push({
-            pathname: './diary/DiaryFinal',
+            pathname: '/diary/DiaryFinal',
             params: { date: formattedDate },
           });
           setIsLoading(false);
@@ -445,7 +353,13 @@ const handleComment = async () => {
               <View style={styles.controlButtons}>
                 {/* 재생 버튼 */}
                 <TouchableOpacity 
-                  onPress={isPlaying ? pausePlaying : playRecording}
+                  onPress={() => {
+                    if (isPlaying) {
+                      pausePlaying();
+                    } else {
+                      playRecording(selectedDate);
+                    }
+                  }}
                   disabled={!hasRecording || isRecording || isPaused}
                   style={[
                     styles.controlButton,
@@ -489,7 +403,7 @@ const handleComment = async () => {
 
                 {/* 중지 버튼 */}
                 <TouchableOpacity 
-                  onPress={handleStopRecording}
+                  onPress={()=> handleStopRecording(selectedDate)}
                   disabled={!isRecording && !isPaused}
                   style={[
                     styles.controlButton,

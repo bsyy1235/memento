@@ -69,7 +69,7 @@ const handleComment = async () => {
     
         setTimeout(() => {
           router.push({
-            pathname: './DiaryFinal',
+            pathname: '/diary/DiaryFinal',
             params: { date: formattedDate },
           });
           setIsLoading(false);
