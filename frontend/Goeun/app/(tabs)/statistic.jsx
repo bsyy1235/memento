@@ -11,7 +11,7 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { getStatisticsByYear } from "../../utils/stat";
 
-import { useDarkMode } from "../DarkModeContext";
+import { useDarkMode } from "../../contexts/DarkModeContext";
 
 export default function Stat() {
   const { isDarkMode } = useDarkMode();

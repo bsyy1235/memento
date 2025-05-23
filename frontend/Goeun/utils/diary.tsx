@@ -84,7 +84,7 @@ export const getDiaryByDate = async (date: string) => {
       return {
         id: response.data.id,
         day_id: response.data.day_id,
-        audio_path: response.data.audio_path ?? null,
+        audio_path: response.data.audio_path ?? "empty",
         content: response.data.content ?? "",
         date: response.data.date,
         day: response.data.day ?? null,
@@ -102,37 +102,57 @@ export const getDiaryByDate = async (date: string) => {
   };
 
 // 음성 파일 받아오기
-export const getAudioFile = async (file_path: string) => {
-  const url = encodeURI(file_path); // 공백/한글 대비 encodeURI
-  try {
-    const response = await api.get(`/${url}`);
-
-    if (!response) {
-      throw new Error(`오디오 파일 요청 실패: ${response}`);
-    }
-    return SERVER_URL+`${decodeURIComponent(file_path)}`;
-  } catch (error) {
-    console.error("오디오 파일 가져오기 오류:", error);
-    throw error;
-  }
+export const getAudioFile = async (diary_id: string) => {
+  return `${SERVER_URL}/api/diary/file/${diary_id}`;
 };
 
-// 다이어리 임시저장
-export async function saveDiary({
+// 텍스트 다이어리 임시저장
+export async function saveTextDiary({
     date,
     content,
+  }: {
+    date: string;
+    content: string;
+  }) {
+    const token = await loadAccessToken();
+    const formData = new FormData();
+    formData.append("diary_date", date);
+    formData.append("content", content ?? "empty"); 
+    formData.append("audio_path", "empty" as any);
+    formData.append("day", JSON.stringify({ wrote_diary: true }));
+    try {
+      const response = await api.post(`/api/diary/?diary_date=${date}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+        console.log("saveDiary 완료")
+      return {
+        id: response.data.id,
+        day_id : response.data.day_id,
+        audio_path: response.data.audio_path ?? null,
+        content: response.data.content ?? "",
+        date: response.data.date,
+      };
+    } catch (error: any) {
+      console.error("saveDiary 오류:", error?.response?.data || error.message || error);
+      return null;
+    }
+  };
+
+  // 오디오 다이어리 임시저장
+export async function saveAudioDiary({
+    date,
     audio_path = null,
     audio_file = null,
   }: {
     date: string;
-    content: string;
     audio_path?: string | null;
     audio_file?: any;
   }) {
     const token = await loadAccessToken();
     const formData = new FormData();
     formData.append("diary_date", date);
-    formData.append("content", content ?? "empty"); 
 
     formData.append("day", JSON.stringify({ wrote_diary: true }));
     if (audio_file) {

@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import React from "react";
-import { useDarkMode } from "../DarkModeContext";
+import { useDarkMode } from "../../contexts/DarkModeContext";
 //import { SettingHome } from "./../../components/Settings/SettingHome";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -254,7 +254,7 @@ export default function setting() {
                 style={{ flex: 1 }}
                 onValueChange={(value) => setSelectedHour(value)}
               >
-                {[...Array(7)].map((_, i) => {
+                {/* {[...Array(7)].map((_, i) => {
                   const hour = i + 17;
                   return (
                     <Picker.Item
@@ -263,7 +263,14 @@ export default function setting() {
                       value={hour}
                     />
                   );
-                })}
+                })} */}
+                {[...Array(24)].map((_, i) => (
+                  <Picker.Item
+                    key={i}
+                    label={i.toString().padStart(2, "0")}
+                    value={i}
+                  />
+                ))}
               </Picker>
 
               <Picker
@@ -271,11 +278,28 @@ export default function setting() {
                 style={{ flex: 1 }}
                 onValueChange={(value) => setSelectedMinute(value)}
               >
-                {[0, 30].map((min) => (
+                {/* {[0, 30].map((min) => (
                   <Picker.Item
                     key={min}
                     label={min.toString().padStart(2, "0")}
                     value={min}
+                  />
+                ))} */}
+                {/* {[...Array(6)].map((_, i) => {
+                  const min = i * 10; // 0, 10, 20, ..., 50
+                  return (
+                    <Picker.Item
+                      key={min}
+                      label={min.toString().padStart(2, "0")}
+                      value={min}
+                    />
+                  );
+                })} */}
+                {[...Array(60)].map((_, i) => (
+                  <Picker.Item
+                    key={i}
+                    label={i.toString().padStart(2, "0")}
+                    value={i}
                   />
                 ))}
               </Picker>
@@ -310,7 +334,6 @@ export default function setting() {
                   try {
                     console.log("✅ 확인 버튼 눌림");
                     const token = await registerForPushNotificationsAsync();
-                    console.log("📨 받은 토큰:", token);
 
                     if (token) {
                       await scheduleDiaryNotification(

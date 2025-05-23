@@ -11,7 +11,7 @@ import { useRouter } from "expo-router";
 import { login } from "../../utils/api";
 
 import { Colors } from "./../../constants/Colors.ts";
-import { useDarkMode } from "../DarkModeContext";
+import { useDarkMode } from "../../contexts/DarkModeContext.jsx";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAccessToken } from "../../utils/api";
@@ -32,7 +32,7 @@ export default function Login() {
     try {
       const res = await login(email, password);
       Alert.alert("로그인 성공!");
-      console.log("✅ 로그인 성공:", res.access_token);
+      console.log("✅ 로그인 성공");
 
       // 로그인 직후 토근 저장을 기다림
       // ✅ 토큰 저장

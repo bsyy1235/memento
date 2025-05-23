@@ -20,7 +20,7 @@ import { getCurrentUser } from "../../utils/api";
 import { Colors } from "../../constants/Colors";
 // import DraggableFlatList from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler"; // ScrollView를 포함함.
-import { useDarkMode } from "../DarkModeContext";
+import { useDarkMode } from "../../contexts/DarkModeContext";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "expo-router";
@@ -35,15 +35,12 @@ import {
   deleteTodoById,
 } from "../../utils/api";
 
-const STORAGE_KEY = "@toDos";
-
 export default function todo() {
   const [text, setText] = useState("");
   const [todos, setTodos] = useState([]);
   const [editingKey, setEditingKey] = useState(null); // 어떤 todo를 수정중인지
   const [editingText, setEditingText] = useState(""); // 수정 중인 텍스트
   const [isEditing, setIsEditing] = useState(false);
-
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const [nickname, setNickname] = useState("");
@@ -65,6 +62,9 @@ export default function todo() {
       setAccessToken(token);
       const formattedDate = format(date, "yyyy-MM-dd");
       const todos = await getTodosByDate(formattedDate);
+
+      todos.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
       setTodos(todos);
     } catch (err) {
       console.error("할 일 불러오기 실패:", err);
@@ -84,49 +84,16 @@ export default function todo() {
     }
   }, [params?.date]);
 
-  //   useFocusEffect(
-  // //   useCallback(() => {
-  // //     loadTodosByDate(selectedDate);
-  // //   }, [selectedDate])
-  // // );
-  //     useCallback(() => {
-  //       const fetchTodosWithToken = async () => {
-  //         const token = await AsyncStorage.getItem("access_token");
-  //         console.log("🧾 불러온 토큰:", token); // 이게 null이라면 저장 실패!
-  //         if (!token) {
-  //           Alert.alert("인증 오류", "로그인이 필요합니다.");
-  //           router.replace("../login/login.jsx"); // 💡 로그인 화면으로 이동
-  //           return;
-  //         }
-
-  //         setAccessToken(token); // ✅ 헤더 설정
-
-  //         try {
-  //           const user = await getCurrentUser();
-  //           setNickname(user.nickname); // ✅ 닉네임 설정
-  //         } catch (e) {
-  //           console.warn("닉네임 로드 실패:", e.message);
-  //         }
-
-  //         const today = new Date().toISOString().split("T")[0];
-
-  //         try {
-  //           const todos = await getTodosByDate(today);
-  //           setTodos(todos);
-  //         } catch (err) {
-  //           setTodos([]);
-  //         }
-  //       };
-
-  //       fetchTodosWithToken();
-  //     }, [])
-  //   );
+  useFocusEffect(
+    useCallback(() => {
+      loadTodosByDate(selectedDate);
+    }, [selectedDate])
+  );
 
   useFocusEffect(
     useCallback(() => {
       const fetchData = async () => {
         const token = await AsyncStorage.getItem("access_token");
-        console.log("🧾 불러온 토큰:", token);
 
         if (!token) {
           Alert.alert("인증 오류", "로그인이 필요합니다.");
@@ -142,16 +109,8 @@ export default function todo() {
         } catch (e) {
           console.warn("닉네임 로드 실패:", e.message);
         }
-
-        try {
-          const todos = await getTodosByDate(selectedDate);
-          setTodos(todos);
-        } catch (err) {
-          console.warn("할 일 로드 실패:", err.message);
-          setTodos([]);
-        }
+        loadTodosByDate(selectedDate);
       };
-
       fetchData();
     }, [selectedDate])
   );

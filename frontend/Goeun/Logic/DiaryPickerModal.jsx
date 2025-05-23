@@ -1,8 +1,10 @@
-import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
+import { View, Text, TouchableOpacity, Modal, StyleSheet } from "react-native";
+import Icon from "react-native-vector-icons/Feather";
 import { Colors } from "../constants/Colors";
+import { useDarkMode } from "../contexts/DarkModeContext";
 
 export default function DiarySelectionModal({ visible, onClose, onSelect }) {
+  const { isDarkMode } = useDarkMode();
   return (
     <Modal
       visible={visible}
@@ -15,8 +17,12 @@ export default function DiarySelectionModal({ visible, onClose, onSelect }) {
           <Text style={styles.modalTitle}>다이어리 선택</Text>
           <View style={styles.optionsContainer}>
             <TouchableOpacity
-              style={[styles.optionButton, styles.textDiaryButton]}
-              onPress={() => onSelect('text')}
+              style={[
+                styles.optionButton,
+                styles.textDiaryButton,
+                { backgroundColor: isDarkMode ? "#efefef" : Colors.subPrimary },
+              ]}
+              onPress={() => onSelect("text")}
             >
               <View style={[styles.iconContainer, styles.textIconContainer]}>
                 <Icon name="edit-2" size={24} color="#687076" />
@@ -24,8 +30,12 @@ export default function DiarySelectionModal({ visible, onClose, onSelect }) {
               <Text style={styles.optionText}>텍스트 다이어리</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.optionButton, styles.voiceDiaryButton]}
-              onPress={() => onSelect('audio')}
+              style={[
+                styles.optionButton,
+                styles.voiceDiaryButton,
+                { backgroundColor: isDarkMode ? "#efefef" : Colors.subPrimary },
+              ]}
+              onPress={() => onSelect("audio")}
             >
               <View style={[styles.iconContainer, styles.voiceIconContainer]}>
                 <Icon name="mic" size={24} color="#687076" />
@@ -33,10 +43,7 @@ export default function DiarySelectionModal({ visible, onClose, onSelect }) {
               <Text style={styles.optionText}>음성 다이어리</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            style={styles.cancelbutton}
-            onPress={onClose}
-          >
+          <TouchableOpacity style={styles.cancelbutton} onPress={onClose}>
             <Text style={styles.cancelText}>취소</Text>
           </TouchableOpacity>
         </View>
@@ -48,30 +55,30 @@ export default function DiarySelectionModal({ visible, onClose, onSelect }) {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalcontainer: {
-    width: '80%',
-    backgroundColor: 'white',
+    width: "80%",
+    backgroundColor: "white",
     borderRadius: 15,
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
   },
   optionsContainer: {
-    width: '100%',
+    width: "100%",
   },
   optionButton: {
     borderRadius: 12,
     padding: 16,
     marginBottom: 15,
-    alignItems: 'center',
+    alignItems: "center",
   },
   textDiaryButton: {
     backgroundColor: Colors.subPrimary,
@@ -85,20 +92,20 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   textIconContainer: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
   voiceIconContainer: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
   optionText: {
-    fontWeight: '500',
+    fontWeight: "500",
   },
   cancelbutton: {
     marginTop: 10,
     padding: 10,
   },
   cancelText: {
-    color: '#666',
-    fontWeight: '500',
+    color: "#666",
+    fontWeight: "500",
   },
 });

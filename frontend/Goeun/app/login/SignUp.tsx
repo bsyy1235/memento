@@ -14,7 +14,7 @@ import { useRouter } from "expo-router";
 import { sendEmailVerificationCode, verifyEmailCode } from "../../utils/api"; // 위치 맞춰서 import
 
 import { Colors } from "../../constants/Colors";
-import { useDarkMode } from "../DarkModeContext";
+import { useDarkMode } from "../../contexts/DarkModeContext";
 
 export default function SignUp() {
   const router = useRouter();

@@ -39,7 +39,6 @@ export default function Calendar() {
   const initializeCalendar = async () => {
     try {
       await loadDiariesData(true); // 강제 새로고침으로 데이터 로드
-      console.log('캘린더 데이터 초기화 완료');
       return true;
     } catch (error) {
       console.error('캘린더 초기화 실패:', error);

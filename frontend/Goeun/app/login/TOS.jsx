@@ -10,7 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 import { Colors } from "../../constants/Colors";
-import { useDarkMode } from "../DarkModeContext";
+import { useDarkMode } from "../../contexts/DarkModeContext";
 
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { registerUser, login, setAccessToken } from "../../utils/api";

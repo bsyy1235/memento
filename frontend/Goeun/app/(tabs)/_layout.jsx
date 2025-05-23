@@ -5,7 +5,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Colors } from "./../../constants/Colors";
-import { useDarkMode } from "../DarkModeContext";
+import { useDarkMode } from "../../contexts/DarkModeContext";
 
 //expo-router는 (tabs)/ 폴더 안에 있는
 //모든 파일이나 폴더를 기본적으로 탭 화면(Tab Screen) 으로 인식.

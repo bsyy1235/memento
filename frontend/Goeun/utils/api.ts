@@ -1,9 +1,9 @@
 import axios from "axios";
 import { storeAccessToken } from "./token";
 
-const BASE_URL = "http://coolchick.site/"; // 백엔드 서버 주소
+const BASE_URL = "https://coolchick.site/"; // 백엔드 서버 주소
 
-export const SERVER_URL = BASE_URL;
+export const SERVER_URL = "https://coolchick.site";
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -36,7 +36,6 @@ let accessToken: string | null = null;
 api.interceptors.request.use((config) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
-    console.log(`${accessToken}`);
   }
   return config;
 });
@@ -60,11 +59,9 @@ export async function login(email: string, password: string) {
     });
 
     const token = response.data.access_token;
-    console.log("🎯 access_token:", token);
 
     setAccessToken(token);
     await storeAccessToken(token);
-    console.log("✅ setAccessToken 호출 성공");
     return response.data;
   } catch (err: any) {
     console.log(
@@ -84,7 +81,7 @@ export async function registerUser(user: {
   gender: "male" | "female";
   age_group: "10대" | "20대" | "30대" | "40대" | "50대" | "60대 이상";
 }) {
-  console.log("📡 회원가입 API 요청 시도:", user);
+  // console.log("📡 회원가입 API 요청 시도:", user);
 
   try {
     // 백엔드 api 요구사항에 맞추기.
@@ -97,12 +94,12 @@ export async function registerUser(user: {
     };
 
     const response = await api.post("/api/user/signup", userData);
-    console.log("✅ 회원가입 성공 응답:", response.data);
+    console.log("✅ 회원가입 성공");
     return response.data;
   } catch (error: any) {
     // 에러.
     console.log("❌ 회원가입 실패 상태 코드:", error.response?.status);
-    console.log("❌ 회원가입 실패 응답:", error.response?.data);
+    console.log("❌ 회원가입 실패 응답");
     if (error.response) {
       // 서버 응답에 에러가 포함된 경우
       if (
@@ -206,10 +203,10 @@ export async function updateUser(user: {
     };
 
     const res = await api.patch("/api/user/me", userData);
-    console.log("✅ 회원정보 수정 성공:", res.data);
+    console.log("✅ 회원정보 수정 성공");
     return res.data;
   } catch (err: any) {
-    console.error("🚨 회원정보 수정 실패:", err.response?.data || err.message);
+    console.error("🚨 회원정보 수정 실패");
     throw new Error("회원정보 수정에 실패했습니다.");
   }
 }
@@ -218,10 +215,10 @@ export async function updateUser(user: {
 export async function deleteUser() {
   try {
     const res = await api.delete("/api/user/me");
-    console.log("✅ 회원탈퇴 성공:", res.data);
+    console.log("✅ 회원탈퇴 성공");
     return res.data;
   } catch (err: any) {
-    console.error("🚨 회원탈퇴 실패:", err.response?.data || err.message);
+    console.error("🚨 회원탈퇴 실패");
     throw new Error("회원탈퇴에 실패했습니다.");
   }
 }
@@ -269,7 +266,7 @@ export async function createTodo(
       completed: res.data.is_done,
     };
   } catch (error: any) {
-    console.error("🚨 할 일 생성 실패:", error.response?.data || error.message);
+    console.error("🚨 할 일 생성 실패");
 
     if (error.response?.status === 401) {
       throw new Error("로그인이 필요합니다. 다시 로그인 해주세요.");
@@ -323,10 +320,7 @@ export async function updateTodo(
       completed: updated.is_done,
     };
   } catch (error: any) {
-    console.error(
-      `투두 업데이트 실패 (ID: ${todo_id}):`,
-      error.response?.data || error.message
-    );
+    console.error(`투두 업데이트 실패 (ID: ${todo_id}):`);
     throw new Error("할 일 수정에 실패했습니다.");
   }
 }
@@ -341,10 +335,7 @@ export async function deleteTodoById(todo_id: string) {
       completed: res.data.is_done,
     };
   } catch (error: any) {
-    console.error(
-      `투두 삭제 실패 (ID: ${todo_id}):`,
-      error.response?.data || error.message
-    );
+    console.error(`투두 삭제 실패 (ID: ${todo_id}):`);
     throw error;
   }
 }
