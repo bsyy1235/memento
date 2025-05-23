@@ -43,7 +43,6 @@ export default function todo() {
   const [editingKey, setEditingKey] = useState(null); // 어떤 todo를 수정중인지
   const [editingText, setEditingText] = useState(""); // 수정 중인 텍스트
   const [isEditing, setIsEditing] = useState(false);
-
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const [nickname, setNickname] = useState("");
@@ -84,49 +83,16 @@ export default function todo() {
     }
   }, [params?.date]);
 
-  //   useFocusEffect(
-  // //   useCallback(() => {
-  // //     loadTodosByDate(selectedDate);
-  // //   }, [selectedDate])
-  // // );
-  //     useCallback(() => {
-  //       const fetchTodosWithToken = async () => {
-  //         const token = await AsyncStorage.getItem("access_token");
-  //         console.log("🧾 불러온 토큰:", token); // 이게 null이라면 저장 실패!
-  //         if (!token) {
-  //           Alert.alert("인증 오류", "로그인이 필요합니다.");
-  //           router.replace("../login/login.jsx"); // 💡 로그인 화면으로 이동
-  //           return;
-  //         }
-
-  //         setAccessToken(token); // ✅ 헤더 설정
-
-  //         try {
-  //           const user = await getCurrentUser();
-  //           setNickname(user.nickname); // ✅ 닉네임 설정
-  //         } catch (e) {
-  //           console.warn("닉네임 로드 실패:", e.message);
-  //         }
-
-  //         const today = new Date().toISOString().split("T")[0];
-
-  //         try {
-  //           const todos = await getTodosByDate(today);
-  //           setTodos(todos);
-  //         } catch (err) {
-  //           setTodos([]);
-  //         }
-  //       };
-
-  //       fetchTodosWithToken();
-  //     }, [])
-  //   );
+    useFocusEffect(
+      useCallback(() => {
+        loadTodosByDate(selectedDate);
+      }, [selectedDate])
+   );
 
   useFocusEffect(
     useCallback(() => {
       const fetchData = async () => {
         const token = await AsyncStorage.getItem("access_token");
-        console.log("🧾 불러온 토큰:", token);
 
         if (!token) {
           Alert.alert("인증 오류", "로그인이 필요합니다.");
@@ -142,16 +108,8 @@ export default function todo() {
         } catch (e) {
           console.warn("닉네임 로드 실패:", e.message);
         }
-
-        try {
-          const todos = await getTodosByDate(selectedDate);
-          setTodos(todos);
-        } catch (err) {
-          console.warn("할 일 로드 실패:", err.message);
-          setTodos([]);
-        }
+        loadTodosByDate(selectedDate);
       };
-
       fetchData();
     }, [selectedDate])
   );
