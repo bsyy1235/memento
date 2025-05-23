@@ -54,7 +54,7 @@ export default function Collect() {
     let target = "";
     if(emotion)
       target = "../diary/DiaryFinal";
-    else if(audio_path)
+    else if(audio_path!="empty")
       target = "../diary/audioDiary";
     else
       target = "../diary/textDiary";

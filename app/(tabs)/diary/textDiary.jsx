@@ -144,7 +144,10 @@ const handleComment = async () => {
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
       try {
         const res = await getDiaryByDate(formattedDate);
-        setDiaryText(res?.content ?? "");
+        if(!res)
+          setDiaryText("");
+        else
+          setDiaryText(res?.content ?? "");
       }
        catch (err) {
         setDiaryText(""); 
@@ -187,7 +190,16 @@ const handleComment = async () => {
                   placeholder="다이어리 작성.."
                   multiline
                   value={diaryText}
-                  onChangeText={setDiaryText}
+                 // 2500자 제한
+                  onChangeText={(text) => {
+                    if (text.length <= 2500) {
+                      setDiaryText(text);
+                    } else {
+                      setDiaryText(text.slice(0, 2500));
+                      Alert.alert('최대 2500자까지만 입력할 수 있습니다.');
+                    }
+                  }}
+                  maxLength={2500} // 입력 자체를 막음 (UI상)
                 />
               </View>
             </ScrollView>

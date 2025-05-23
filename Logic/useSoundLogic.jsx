@@ -4,6 +4,7 @@ import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import { format } from "date-fns";
 import { getDiaryByDate } from "../utils/diary";
+import { SERVER_URL } from "../utils/api";
 
 const MAX_RECORDING_SECONDS = 300; 
 
@@ -18,6 +19,7 @@ export const useSoundLogic = () => {
   const [hasRecording, setHasRecording] = useState(false);
   const [timer, setTimer] = useState(null); // 녹음 시간 측정용 타이머
   const [isLoading, setIsLoading] = useState(false); // 로딩 상태
+  const [currentPosition, setCurrentPosition] = useState(0);
 
 const clearRecordingResources = async () => {
   try {
@@ -248,7 +250,7 @@ const resumeRecording = async () => {
         return;
       }
 
-      const url = `${SERVER_URL}/api/file/${diaryId}`;
+      const url = await getAudioFile(diaryId);
       const fileName = `voice_${diaryId}.wav`;
       const localUri = FileSystem.cacheDirectory + fileName;
 
@@ -257,9 +259,7 @@ const resumeRecording = async () => {
       if (info.exists) await FileSystem.deleteAsync(localUri);
 
       const downloadResult = await FileSystem.downloadAsync(url, localUri);
-      console.log('[DEBUG] 다운로드 결과:', downloadResult);
       const fileInfo = await FileSystem.getInfoAsync(localUri);
-      console.log('[DEBUG] fileInfo:', fileInfo);
       uri = localUri;
       setIsLoading(false);
     }
@@ -272,10 +272,14 @@ const resumeRecording = async () => {
     setIsPlaying(true);
 
     sound.setOnPlaybackStatusUpdate(status => {
-      if (status.didJustFinish) {
-        setIsPlaying(false);
-        sound.unloadAsync();
-      }
+      if (status.isLoaded) {
+          setCurrentPosition(status.positionMillis || 0);
+          if (status.didJustFinish) {
+            setIsPlaying(false);
+            setCurrentPosition(0);
+            sound.unloadAsync();
+          }
+        }
     });
 
     await sound.playAsync();
@@ -285,12 +289,15 @@ const resumeRecording = async () => {
     setIsPlaying(false);
   }
 };
+
 const pausePlaying = async () => {
   if (sound && isPlaying) {
     await sound.pauseAsync();
     setIsPlaying(false);
   }
 };
+
+
 
     return {
       isRecording, setIsRecording,
@@ -303,6 +310,7 @@ const pausePlaying = async () => {
       hasRecording, setHasRecording,
       timer, setTimer,
       isLoading, setIsLoading,
+      currentPosition, setCurrentPosition,
       handleStartRecording,
       startRecording, pauseRecording,
       playRecording, pausePlaying, handleStopRecording

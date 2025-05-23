@@ -4,12 +4,23 @@ import React, { useState, useEffect } from "react";
 import { Colors } from "../../../constants/Colors";
 import { useDarkMode } from "../../DarkModeContext.jsx";
 import { getDiaryByDate, updateEmotion, getAudioFile } from '../../../utils/diary';
+import { loadAccessToken } from "../../../utils/token";
 import { format } from 'date-fns';
 import {formatDateHeader} from "../../../Logic/diaryFunction.jsx";
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
 import { useSoundLogic } from "../../../Logic/useSoundLogic";
+
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return global.btoa(binary); // Expo 환경에서 global.btoa 사용
+}
 
 export default function DiaryFinal({ route }) {
     const [showNewDiv, setShowNewDiv] = useState(false);
@@ -21,24 +32,22 @@ export default function DiaryFinal({ route }) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const { isDarkMode } = useDarkMode();
-    const [selectedDate, setSelectedDate] = useState(new Date());
-    const [showDateModal, setShowDateModal] = useState(false);
-    const [tempDate, setTempDate] = useState(new Date());
+    const params = useLocalSearchParams();
+    const initialDate = params?.date ? new Date(params.date) : new Date();
+    const [selectedDate, setSelectedDate] = useState(initialDate);
     
-    const [recordingUri, setRecordingUri] = useState(null);
-    const [recordingDuration, setRecordingDuration] = useState(0);
-
     const {
+        recordingUri, setRecordingUri,
+        recordingDuration, setRecordingDuration,
+        hasRecording, setHasRecording,
         sound, setSound,
         isPlaying, setIsPlaying,
-        currentPosition, setCurrentPosition,
-        formatTime,} = useSoundLogic();
+        currentPosition, setCurrentPosition, 
+        playRecording,pausePlaying,
+    } = useSoundLogic();
 
     const router = useRouter();
     if (!router) return null;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); 
-    const params = useLocalSearchParams();
 
     useEffect(() => {
       if (params?.date) {
@@ -47,20 +56,39 @@ export default function DiaryFinal({ route }) {
           setSelectedDate(parsedDate);
       }
     }, [params?.date]);
-    
-    // 컴포넌트 언마운트 시 사운드 정리
+
     useEffect(() => {
-      return () => {
-        if (sound) {
-          sound.unloadAsync();
+      const setDurationFromFile = async () => {
+        if (recordingUri) {
+          try {
+            // 기존 sound 있으면 언로드
+            if (sound) await sound.unloadAsync();
+            const { sound: loadedSound } = await Audio.Sound.createAsync({ uri: recordingUri });
+            setSound(loadedSound);
+            const status = await loadedSound.getStatusAsync();
+            if (status?.durationMillis) {
+              setRecordingDuration(Math.floor(status.durationMillis / 1000));
+            }
+          } catch (e) {
+            setRecordingDuration(0);
+          }
         }
       };
-    }, [sound]);
-
+      setDurationFromFile();
+      return () => { if (sound) sound.unloadAsync(); };
+    }, [recordingUri]);
+    
   const showDatepicker = () => {
     router.push("/diary");
   };
 
+    // 시간 포맷팅 함수 (00:00 형식)
+  function formatTime(sec) {
+    sec = Math.floor(sec);
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+  }
 
   const [modalVisible, setModalVisible] = useState(false);
   const emotions = ['기쁨', '슬픔', '화남', '지침', '중립'];
@@ -85,22 +113,74 @@ export default function DiaryFinal({ route }) {
     const formattedDate = format(selectedDate, "yyyy-MM-dd");
     try {
       setLoading(true);
+      console.log(selectedDate);
       const res = await getDiaryByDate(formattedDate);
       if (res) {
         setDiaryText(res.content || "");
         setDate(res.date || "");
         if (res.day) { setEmotion(res.day.emotion || ""); }
         if (res.comment) { setComment(res.comment.content || "");}
-      }
-      if (res?.audio_path && res.audio_path !== "empty") {
-        const file_path = res.audio_path;
-        const audioUrl = await getAudioFile(file_path);
 
+        // 음성 파일 경로가 있으면 서버에서 파일 다운로드 후 recordingUri에 저장
+      if (res.audio_path && res.id) {
+        const diaryId = res.id;
+        try {
+          const token = await loadAccessToken();
+          const audioUrl = await getAudioFile(diaryId); // URL 반환
+          const localUri = FileSystem.cacheDirectory + `voice_${diaryId}.wav`;
 
+          // === [1] 인증 포함 fetch로 파일 받아와 blob으로 변환 ===
+          const response = await fetch(audioUrl, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            }
+          });
+
+          if (!response.ok) {
+            const text = await response.text();
+            console.log('[DEBUG] fetch 응답:', text);
+            setRecordingUri(null);
+            setHasRecording(false);
+            return;
+          }
+          const blob = await response.blob();
+
+          // === [2] blob → base64 변환해서 파일 저장 ===
+          const reader = new FileReader();
+          reader.onloadend = async () => {
+            const base64data = reader.result.split(',')[1];
+            // 기존 파일 삭제
+            const existing = await FileSystem.getInfoAsync(localUri);
+            if (existing.exists) await FileSystem.deleteAsync(localUri);
+
+            await FileSystem.writeAsStringAsync(localUri, base64data, { encoding: FileSystem.EncodingType.Base64 });
+
+            // 파일 존재 및 크기 확인
+            const fileInfo = await FileSystem.getInfoAsync(localUri);
+            console.log('[DEBUG] fileInfo:', fileInfo);
+            if (!fileInfo.exists || fileInfo.size < 1000) {
+              setRecordingUri(null);
+              setHasRecording(false);
+              console.log('오디오 파일이 존재하지 않거나 손상됨:', localUri);
+              return;
+            }
+
+            setRecordingUri(localUri);
+            setHasRecording(true);
+          };
+          reader.readAsDataURL(blob);
+
+        } catch (audioErr) {
+          setRecordingUri(null);
+          setHasRecording(false);
+          console.log('오디오 파일 불러오기 실패:', audioErr);
+        }
       } else {
-        setRecordingUri(null); setRecordingDuration(0);
-        if (sound) { await sound.unloadAsync(); setSound(null); }
+        setRecordingUri(null);
+        setHasRecording(false);
       }
+      }
+
       setLoading(false);
     } catch (err) {
       console.warn("📭 일기 불러오기 실패:", err);
@@ -184,7 +264,16 @@ export default function DiaryFinal({ route }) {
 
             { recordingUri && recordingUri !== "empty" && (
             <View style={styles.audioControls}>
-              <TouchableOpacity onPress={togglePlayback} style={styles.micButton}>
+              <TouchableOpacity 
+                onPress={() => {
+                  if (isPlaying) {
+                      pausePlaying();
+                    } else {
+                      playRecording(selectedDate);
+                    }
+                }}
+                style={styles.micButton}
+              >
                 <Image
                   source={
                     isPlaying 
@@ -196,8 +285,10 @@ export default function DiaryFinal({ route }) {
               </TouchableOpacity>
               {/* 재생 시간 표시 */}
               {recordingDuration > 0 && (
-                <Text style={styles.audioTimeText}>
-                  {formatTime(currentPosition)} / {formatTime(recordingDuration * 1000)}
+                <Text 
+                  style={styles.audioTimeText}
+                >
+                  {formatTime(currentPosition/1000)} / {formatTime(recordingDuration)}
                 </Text>
               )}
             </View>
@@ -338,7 +429,7 @@ export default function DiaryFinal({ route }) {
     diaryDiv: {
       // backgroundColor: Colors.subPrimary,
       borderRadius: 10,
-      minHeight: "30%", // 최소 높이 지정
+      minHeight: "10%", // 최소 높이 지정
       flex: 1, // 부모 ScrollView의 공간을 모두 차지하도록 flex: 1 추가
       padding: 10,
       borderWidth: 0.5,
@@ -575,18 +666,20 @@ export default function DiaryFinal({ route }) {
   },
   micButton: {
     padding: 8,
-    marginLeft: 10,
+    marginLeft: 'auto',
     marginRight: 'auto',
   },
   // 새로 추가된 스타일
   audioControls: {
     flexDirection: 'row',
     alignItems: 'center',
+
   },
   audioTimeText: {
     fontSize: 12,
     color: '#666',
-    marginLeft: 8,
+    marginLeft:4,
+    minWidth: 60,
   },
     
 });

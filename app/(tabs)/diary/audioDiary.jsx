@@ -87,15 +87,11 @@ useEffect(() => {
     }
   };
   setDurationFromFile();
-  // 클린업(사운드 언로드)
   return () => { if (sound) sound.unloadAsync(); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [recordingUri]);
 
 
-
-
-  // 시간 포맷팅 함수 (00:00:00 형식)
+  // 시간 포맷팅 함수 (00:00 형식)
   function formatTime(sec) {
     const m = Math.floor(sec / 60).toString().padStart(2, '0');
     const s = (sec % 60).toString().padStart(2, '0');
@@ -136,8 +132,6 @@ useEffect(() => {
 const fetchDiary = async () => {
   setIsLoading(true);
   const formattedDate = format(selectedDate, "yyyy-MM-dd");
-  console.log("조회하는 날짜:", formattedDate);
-
   try {
     const res = await getDiaryByDate(formattedDate);
     
