@@ -10,10 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { updateUser } from "../../utils/api";
-
-import { login, setAccessToken } from "../../utils/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { updateUserPartial } from "../../utils/api";
 
 import { Colors } from "../../constants/Colors";
 import { useDarkMode } from "../DarkModeContext";
@@ -36,52 +33,25 @@ export default function SignUp() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  const sendVerificationCode = async () => {
-    if (!email.trim()) {
-      Alert.alert("알림", "이메일을 입력해주세요.");
-      return;
+  const [passwordError, setPasswordError] = useState(""); // 기존 비밀번호 오류 표시용
+
+  const [passwordLengthError, setPasswordLengthError] = useState("");
+  const [passwordFormatError, setPasswordFormatError] = useState("");
+
+  function validatePasswordFields(pw: string) {
+    if (pw.length < 8 || pw.length > 20) {
+      setPasswordLengthError("비밀번호는 8자 이상 20자 이하이어야 합니다.");
+    } else {
+      setPasswordLengthError("");
     }
 
-    try {
-      const res = await sendEmailVerificationCode(email.trim());
-      // const send_code =
-      //   typeof res === "string"
-      //     ? res
-      //     : typeof res?.message === "string"
-      //     ? res.message
-      //     : JSON.stringify(res);
-
-      Alert.alert(
-        "인증번호 발송",
-        `인증번호가 발송되었습니다.${"\n"}인증번호를 입력해주세요.`
-      ); //send_code
-    } catch (err: any) {
-      Alert.alert("실패", "인증번호 발송에 실패했습니다."); //err.message
+    const formatRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/;
+    if (!formatRegex.test(pw)) {
+      setPasswordFormatError("영문자, 숫자, 특수문자를 모두 포함해야 합니다.");
+    } else {
+      setPasswordFormatError("");
     }
-  };
-
-  const checkVerificationCode = async () => {
-    if (!verificationCode.trim()) {
-      Alert.alert("알림", "인증번호를 다시 확인해주세요.");
-      return;
-    }
-
-    try {
-      const res = await verifyEmailCode(email.trim(), verificationCode.trim());
-      // const success_msg =
-      //   typeof res === "string"
-      //     ? res
-      //     : typeof res?.message === "string"
-      //     ? res.message
-      //     : JSON.stringify(res);
-      Alert.alert("인증 성공", "이메일 인증 성공"); // ex: "인증 성공"
-      // 필요 시 상태 저장: setIsVerified(true);
-    } catch (err: any) {
-      // Alert.alert("인증 실패", "인증에 실패했습니다."); //err.message
-      console.error("❌ 인증 실패:", err.response?.data || err.message);
-      Alert.alert("인증 실패", err.message || "인증에 실패했습니다.");
-    }
-  };
+  }
 
   const Back = () => {
     router.push("../(tabs)/setting");
@@ -101,40 +71,49 @@ export default function SignUp() {
   }
 
   const handleUpdate = async () => {
-    console.log("🔔 회원정보 수정 버튼 눌림"); //작동 함!
-    // 필수 입력 필드 검증
-    const requiredFields = [
-      { name: "닉네임", value: nickname },
-      { name: "성별", value: gender },
-      { name: "나이", value: age },
-      { name: "이메일", value: email },
-    ];
+    setPasswordError(""); // 초기화
 
-    // 비어있는 필드 찾기
-    const missingFields = requiredFields.filter((field) => !field.value.trim());
-
-    // 비어있는 필드가 있는 경우
-    if (missingFields.length > 0) {
-      const missingFieldNames = missingFields
-        .map((field) => field.name)
-        .join(", ");
-      Alert.alert("알림", `${missingFieldNames}을(를) 입력해주세요.`);
+    if (!nickname.trim() || !age.trim()) {
+      Alert.alert("알림", "닉네임과 나이를 모두 입력해주세요.");
       return;
     }
 
-    // 모든 검증을 통과하면 회원정보 수정 진행
+    if (!currentPassword.trim() || !newPassword.trim()) {
+      Alert.alert("알림", "기존 비밀번호와 새 비밀번호를 모두 입력해주세요.");
+      return;
+    }
+
+    if (passwordLengthError || passwordFormatError) {
+      Alert.alert("알림", "새 비밀번호 형식을 확인해주세요.");
+      return;
+    }
+
     try {
-      await updateUser({
-        email,
-        nickname,
-        gender: gender === "남자" ? "male" : "female", // 또는 라디오 버튼 등으로 변환 // 라디오로 수정해야 할듯.
-        age_group: convertAgeToGroup(age), // FastAPI는 '10대' '20대' 이런 형식을 요구함
+      // 1. 비밀번호 먼저 수정
+      await updatePassword(currentPassword.trim(), newPassword.trim());
+
+      // 2. 닉네임 + 나이 수정
+      await updateUserPartial({
+        nickname: nickname.trim(),
+        age_group: convertAgeToGroup(age),
       });
 
-      Alert.alert("회원정보 수정", "회원정보 수정 완료!");
-      router.push("../(tabs)/home"); // home으로 이동
-    } catch (error) {
-      Alert.alert("회원정보 수정 실패", (error as Error).message);
+      Alert.alert("회원정보 수정", "회원정보가 성공적으로 변경되었습니다.");
+      router.push("../(tabs)/home");
+    } catch (err: any) {
+      const msg = err.message || "";
+
+      if (
+        msg.includes("Incorrect password") ||
+        msg.includes("at least 8 characters") || // 문자열 길이 에러
+        msg.includes("value does not match the regex") // 정규식 실패 에러 (형식 오류) // 메시지는 이게 아니겠지만.
+      ) {
+        setPasswordError("현재 비밀번호가 올바르지 않습니다.");
+      } else if (msg.includes("New password cannot be the same")) {
+        Alert.alert("오류", "새 비밀번호는 기존 비밀번호와 달라야합니다.");
+      } else {
+        Alert.alert("오류", msg || "회원정보 수정에 실패했습니다.");
+      }
     }
   };
 
@@ -207,9 +186,26 @@ export default function SignUp() {
               placeholder="기존 비밀번호 *"
               secureTextEntry={true}
               value={currentPassword}
-              onChangeText={setCurrentPassword}
+              onChangeText={(text) => {
+                setCurrentPassword(text);
+                setPasswordError(""); // 입력시 에러 제거
+              }}
             />
           </View>
+          {/* ❗️빨간 에러 메시지 출력 */}
+          {passwordError ? (
+            <Text
+              style={{
+                color: "red",
+                fontSize: 12,
+                marginLeft: 5,
+                marginTop: -2,
+                marginBottom: 8,
+              }}
+            >
+              {passwordError}
+            </Text>
+          ) : null}
         </View>
         <View>
           <View style={styles.subheader}>
@@ -226,9 +222,29 @@ export default function SignUp() {
               placeholder="비밀번호 재설정 *"
               secureTextEntry={true}
               value={newPassword}
-              onChangeText={setNewPassword}
+              onChangeText={(text) => {
+                setNewPassword(text);
+                validatePasswordFields(text);
+              }}
             />
           </View>
+          {passwordLengthError ? (
+            <Text style={{ color: "red", fontSize: 12, marginLeft: 5 }}>
+              {passwordLengthError}
+            </Text>
+          ) : null}
+          {passwordFormatError ? (
+            <Text
+              style={{
+                color: "red",
+                fontSize: 12,
+                marginLeft: 5,
+                marginBottom: 8,
+              }}
+            >
+              {passwordFormatError}
+            </Text>
+          ) : null}
         </View>
         <TouchableOpacity
           style={[
