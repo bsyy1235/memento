@@ -63,9 +63,10 @@ export default function todo() {
       const formattedDate = format(date, "yyyy-MM-dd");
       const todos = await getTodosByDate(formattedDate);
 
-      todos.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-
-      setTodos(todos);
+      const sortedTodos = [...todos].sort(
+        (a, b) => new Date(a.created_at) - new Date(b.created_at)
+      );
+      setTodos(sortedTodos);
     } catch (err) {
       console.error("할 일 불러오기 실패:", err);
       setTodos([]);
@@ -121,7 +122,10 @@ export default function todo() {
     const formattedDate = format(selectedDate, "yyyy-MM-dd");
     try {
       const newTodo = await createTodo(text, false, formattedDate);
-      setTodos([...todos, newTodo]);
+      const updatedTodos = [...todos, newTodo].sort(
+        (a, b) => new Date(a.created_at) - new Date(b.created_at)
+      );
+      setTodos(updatedTodos);
       setText("");
     } catch (err) {
       Alert.alert("에러", "할 일 생성 실패");
