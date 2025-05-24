@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
 import { getDiaryHome } from "../utils/diary";
 import { useDarkMode } from "../contexts/DarkModeContext";
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export const useCalendarLogic = () => {
   const { isDarkMode } = useDarkMode();
@@ -183,7 +184,9 @@ export const useCalendarLogic = () => {
         const backgroundColor = feelingColors[status.feeling] || "#ccc";
         return (
           <View style={[styles.statusCircleBase, { backgroundColor }]}>
-            {status.todoCompleted && <Text style={styles.checkMark}>✓</Text>}
+             {status.todoCompleted && (
+              <MaterialCommunityIcons name="check-bold" size={28} color="#fff" />
+              )}
           </View>
         );
       }
@@ -192,14 +195,16 @@ export const useCalendarLogic = () => {
       else if (status.diaryStatus === "completed") {
         return (
           <View style={[styles.statusCircleBase, styles.emptyCircleBorder]}>
-            {status.todoCompleted && <Text style={styles.checkMark}>✓</Text>}
+            {status.todoCompleted && (
+              <MaterialCommunityIcons name="check-bold" size={28} color="#aaa" />
+            )       }
           </View>
         );
       }
 
       // 할 일만 완료된 경우 (체크만 표시)
       else if (status.todoCompleted) {
-        return <Text style={styles.checkMarkAlone}>✓</Text>;
+        return <MaterialCommunityIcons name="check-bold" size={28} color="#aaa" style={styles.checkMarkAloneIcon} />
       }
 
       // 아무 것도 없을 때
@@ -258,14 +263,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
   },
-  // 동그라미 없이 체크만 나올 때
-  checkMarkAlone: {
+  checkMarkAloneIcon: {
     height: 40,
-    fontSize: 18,
-    fontWeight: "bold",
-    padding: 5,
-    marginTop: 2,
-  },
+    textAlign: "center",
+    textAlignVertical: "center",
+    alignSelf: "center",
+},
   // 아무 표시가 없을 때도 레이아웃 유지용
   indicatorPlaceholder: {
     height: 40,

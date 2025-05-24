@@ -65,7 +65,7 @@ export default function Collect() {
   const handleViewMore = (date, emotion, audio_path) => {
     let target = "";
     if (emotion) target = "../diary/DiaryFinal";
-    else if (audio_path != "empty") target = "../diary/audioDiary";
+    else if (audio_path && audio_path !== "empty") target = "../diary/audioDiary";
     else target = "../diary/textDiary";
     router.push({ pathname: target, params: { date } });
   };
@@ -211,9 +211,12 @@ const styles = StyleSheet.create({
     width: 70, // 버튼과 감정 라벨을 위한 고정 너비
     marginTop: -3,
     marginBottom: -8,
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     alignItems: "flex-end",
     flexDirection: "column",
+    height: "100%",
+    minHeight: 100,
+    
   },
   diaryDiv: {
     // backgroundColor: Colors.subPrimary,
@@ -233,11 +236,12 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   buttonsContainer: {
-    // position: "absolute",
-    // bottom: 5,
     // right: 7,
     flexDirection: "column",
     alignItems: "flex-end",
+    marginTop: 'auto',       // ← auto에서 0으로!
+    marginBottom: 0, 
+    paddingBottom: 0,
   },
   audioButton: {
     width: 20,

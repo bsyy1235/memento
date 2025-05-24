@@ -32,7 +32,6 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -50,7 +49,6 @@
         }
       ]
     ],
-
     "experiments": {
       "typedRoutes": true
     },
@@ -59,9 +57,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "9f5520c9-376e-4ec6-9c34-1487ab5a6447"
+        "projectId": "f4c57d42-6a22-4d51-bb59-f6bf579f62fd"
       }
     },
-    "owner": "giver"
+    "owner": "bsyy1235"
   }
 }
