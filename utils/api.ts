@@ -18,6 +18,7 @@ export type RawTodo = {
   content: string;
   is_done: boolean;
   day_id: string;
+  created_at: string;
 };
 
 export type Day = {
@@ -264,6 +265,7 @@ export async function createTodo(
       id: res.data.id,
       text: res.data.content,
       completed: res.data.is_done,
+      created_at: res.data.created_at,
     };
   } catch (error: any) {
     console.error("🚨 할 일 생성 실패");
@@ -292,6 +294,7 @@ export async function getTodosByDate(day_date: string) {
       id: t.id,
       text: t.content,
       completed: t.is_done,
+      created_at: t.created_at, // 백엔드에서 정렬한 순서 그대로 프론트로 created_at이 전달
     }));
   } catch (err: any) {
     return []; // Day가 없으면 빈 할 일 목록
@@ -318,6 +321,7 @@ export async function updateTodo(
       id: updated.id,
       text: updated.content,
       completed: updated.is_done,
+      created_at: updated.created_at,
     };
   } catch (error: any) {
     console.error(`투두 업데이트 실패 (ID: ${todo_id}):`);
