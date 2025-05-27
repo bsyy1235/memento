@@ -5,46 +5,81 @@ import {
   StatusBar,
   Alert,
   TouchableOpacity,
+  Modal,
 } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import React from "react";
-import { useDarkMode } from "../DarkModeContext";
+import { useDarkMode } from "../../contexts/DarkModeContext";
 //import { SettingHome } from "./../../components/Settings/SettingHome";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Colors } from "./../../constants/Colors";
 
+import {
+  registerForPushNotificationsAsync,
+  scheduleDiaryNotification,
+} from "../../utils/notification";
+
+import { deleteUser } from "../../utils/api";
+import { clearAccessToken } from "../../utils/token";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 export default function setting() {
-  const alertProfile = (id) => {
+  const alertProfile = () => {
     Alert.alert("회원 탈퇴를 진행할까요?", "데이터를 모두 잃게 됩니다.", [
       {
         text: "네",
-        /*onPress: async () => {
-          const newTodos = { ...todos };
-          delete newTodos[id];
-          setTodos(newTodos);
-          await saveTodos(newTodos);
-        },*/
+        onPress: () => {
+          (async () => {
+            try {
+              await deleteUser(); // ✅ API 호출
+              await AsyncStorage.removeItem("access_token"); // ✅ 토큰 제거
+              Alert.alert("탈퇴 완료", "회원 탈퇴가 완료되었습니다.");
+              router.replace("../login/login"); // ✅ 로그인 화면으로 이동
+            } catch (err) {
+              if (err instanceof Error) {
+                Alert.alert("오류", err.message);
+              } else {
+                Alert.alert("오류", "알 수 없는 에러가 발생했습니다.");
+              }
+            }
+          })();
+        },
       },
       {
         text: "아니오",
+        style: "cancel",
       },
     ]);
   };
-  const alertLogout = (id) => {
+
+  const alertLogout = () => {
     Alert.alert("로그아웃", "로그아웃 하시겠습니까?", [
       {
         text: "네",
+        onPress: async () => {
+          try {
+            await clearAccessToken();      // ✅ access token 제거
+            router.replace("../login/login"); // ✅ 홈이 아닌 login으로 이동
+          } catch (e) {
+            Alert.alert("오류", "로그아웃에 실패했습니다.");
+          }
+        },
       },
       {
         text: "아니오",
       },
     ]);
-    router.push('../login/login')
   };
 
   const [isPushMode, setIsPushMode] = useState(false);
   // const [isDarkMode, setIsDarkMode] = useState(false);
   const { isDarkMode, setIsDarkMode } = useDarkMode();
+
+  const [isTimePickerVisible, setIsTimePickerVisible] = useState(false);
+  const [selectedHour, setSelectedHour] = useState(21);
+  const [selectedMinute, setSelectedMinute] = useState(0);
 
   return (
     <View style={styles.main}>
@@ -52,7 +87,7 @@ export default function setting() {
       <View style={styles.header}>
         <Text style={styles.headerText}>설정</Text>
       </View>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => router.push("../user/update")}>
         <View
           style={[
             styles.div,
@@ -82,7 +117,7 @@ export default function setting() {
                 backgroundColor: isDarkMode ? "#d3d3d3" : "#FFD8C2",
               },
             ]}
-            onPress={() => setIsPushMode(true)}
+            onPress={() => setIsTimePickerVisible(true)}
           >
             <Text
               style={[styles.toggleText, isPushMode && styles.selectedText]}
@@ -192,6 +227,146 @@ export default function setting() {
           <Text style={styles.divText}>회원 탈퇴</Text>
         </View>
       </TouchableOpacity>
+
+      <Modal visible={isTimePickerVisible} transparent animationType="slide">
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.3)",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "white",
+              width: "80%",
+              padding: 20,
+              borderRadius: 10,
+            }}
+          >
+            <Text style={{ fontSize: 18, marginBottom: 10 }}>
+              알림 시간을 선택하세요
+            </Text>
+
+            <View style={{ flexDirection: "row", marginBottom: 20 }}>
+              <Picker
+                selectedValue={selectedHour}
+                style={{ flex: 1 }}
+                onValueChange={(value) => setSelectedHour(value)}
+              >
+                {/* {[...Array(7)].map((_, i) => {
+                  const hour = i + 17;
+                  return (
+                    <Picker.Item
+                      key={hour}
+                      label={`${hour.toString().padStart(2, "0")}`}
+                      value={hour}
+                    />
+                  );
+                })} */}
+                {[...Array(24)].map((_, i) => (
+                  <Picker.Item
+                    key={i}
+                    label={i.toString().padStart(2, "0")}
+                    value={i}
+                  />
+                ))}
+              </Picker>
+
+              <Picker
+                selectedValue={selectedMinute}
+                style={{ flex: 1 }}
+                onValueChange={(value) => setSelectedMinute(value)}
+              >
+                {/* {[0, 30].map((min) => (
+                  <Picker.Item
+                    key={min}
+                    label={min.toString().padStart(2, "0")}
+                    value={min}
+                  />
+                ))} */}
+                {/* {[...Array(6)].map((_, i) => {
+                  const min = i * 10; // 0, 10, 20, ..., 50
+                  return (
+                    <Picker.Item
+                      key={min}
+                      label={min.toString().padStart(2, "0")}
+                      value={min}
+                    />
+                  );
+                })} */}
+                {[...Array(60)].map((_, i) => (
+                  <Picker.Item
+                    key={i}
+                    label={i.toString().padStart(2, "0")}
+                    value={i}
+                  />
+                ))}
+              </Picker>
+            </View>
+
+            {/* ✅ 버튼 영역 */}
+            <View style={{ flexDirection: "row" }}>
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  backgroundColor: "#efefef",
+                  padding: 12,
+                  borderRadius: 8,
+                  marginRight: 5,
+                }}
+                onPress={() => setIsTimePickerVisible(false)}
+              >
+                <Text style={{ textAlign: "center" }}>취소</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  {
+                    flex: 1,
+                    backgroundColor: isDarkMode ? "#efefef" : Colors.subPrimary,
+                    padding: 12,
+                    borderRadius: 8,
+                    marginLeft: 5,
+                  },
+                ]}
+                onPress={async () => {
+                  try {
+                    console.log("✅ 확인 버튼 눌림");
+                    const token = await registerForPushNotificationsAsync();
+
+                    if (token) {
+                      await scheduleDiaryNotification(
+                        selectedHour,
+                        selectedMinute
+                      );
+                      Alert.alert(
+                        "설정 완료",
+                        `${selectedHour}시 ${selectedMinute
+                          .toString()
+                          .padStart(2, "0")}분에 알림이 설정되었습니다.`
+                      );
+                      setIsPushMode(true);
+                    } else {
+                      Alert.alert("오류", "푸쉬 토큰을 받을 수 없습니다.");
+                    }
+                  } catch (err) {
+                    console.error("❌ 알림 설정 실패:", err);
+                    Alert.alert("오류", "푸쉬 알림 설정 중 오류 발생");
+                  } finally {
+                    setIsTimePickerVisible(false);
+                  }
+                }}
+              >
+                <Text style={{ color: "black", textAlign: "center" }}>
+                  확인
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
